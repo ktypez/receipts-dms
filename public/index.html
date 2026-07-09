@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบจัดการใบเสร็จ</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>ระบบจัดการใบเสร็จ</h1>
+
+    <div class="card" id="upload-card">
+      <h2>อัปโหลดใบเสร็จ</h2>
+      <div class="drop-zone" id="drop-zone">
+        <p>ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,application/pdf" hidden />
+      </div>
+      <p class="file-name" id="file-name"></p>
+      <div class="form-row">
+        <select id="category-select" disabled>
+          <option value="">กำลังโหลดหมวดหมู่...</option>
+        </select>
+      </div>
+      <button id="upload-btn" disabled>อัปโหลดใบเสร็จ</button>
+      <p class="status" id="upload-status"></p>
+    </div>
+
+    <div class="card" id="receipts-card">
+      <h2>รายการใบเสร็จ</h2>
+      <div class="filter-row">
+        <input type="text" id="search-input" placeholder="ค้นหาชื่อไฟล์..." />
+        <select id="filter-category">
+          <option value="">ทั้งหมด</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>หมวดหมู่</th>
+              <th>ไฟล์</th>
+              <th>ขนาด</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="receipts-body">
+            <tr id="empty-row">
+              <td colspan="5">ยังไม่มีใบเสร็จ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="category-card">
+      <h2>จัดการหมวดหมู่</h2>
+      <div class="form-row">
+        <input type="text" id="new-category" placeholder="ชื่อหมวดหมู่ใหม่" />
+        <button id="add-category-btn">เพิ่มหมวดหมู่</button>
+      </div>
+      <ul id="category-list"></ul>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
