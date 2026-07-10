@@ -41,7 +41,8 @@ export async function onRequestPost(context) {
 
 export async function onRequestPut(context) {
   const { receipts_db: DB } = context.env;
-  const id = context.params.id;
+  const url = new URL(context.request.url);
+  const id = url.pathname.split("/").pop();
   const body = await context.request.json();
   const name = (body.name || "").trim();
   if (!name) {
@@ -72,7 +73,8 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { receipts_db: DB } = context.env;
-  const id = context.params.id;
+  const url = new URL(context.request.url);
+  const id = url.pathname.split("/").pop();
 
   const cat = await DB.prepare("SELECT name FROM categories WHERE id = ?")
     .bind(id)

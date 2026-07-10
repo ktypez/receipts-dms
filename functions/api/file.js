@@ -1,6 +1,7 @@
 export async function onRequestGet(context) {
   const { BUCKET } = context.env;
-  const id = context.params.id;
+  const url = new URL(context.request.url);
+  const id = url.pathname.split("/").pop();
   const obj = await BUCKET.get(id);
   if (!obj) return new Response("ไม่พบไฟล์", { status: 404 });
 
