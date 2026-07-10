@@ -1,0 +1,25 @@
+export interface Receipt {
+  id: string;
+  filename: string;
+  category: string;
+  content_type: string;
+  size: number;
+  uploaded_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface UploadResponse {
+  id: string;
+  filename: string;
+  category: string;
+  uploaded_at: string;
+}
+
+export interface ApiError {
+  error: string;
+}
