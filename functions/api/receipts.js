@@ -1,5 +1,5 @@
 export async function onRequestGet(context) {
-  const { DB } = context.env;
+  const { receipts_db: DB } = context.env;
   const url = new URL(context.request.url);
   const category = url.searchParams.get("category");
   const q = url.searchParams.get("q");
