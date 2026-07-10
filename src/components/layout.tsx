@@ -5,21 +5,35 @@ import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 
+type SidebarState = "full" | "icon" | "hidden";
+
+const nextState: Record<SidebarState, SidebarState> = {
+  full: "icon",
+  icon: "hidden",
+  hidden: "full",
+};
+
+const marginMap: Record<SidebarState, string> = {
+  full: "lg:ml-56",
+  icon: "lg:ml-16",
+  hidden: "lg:ml-0",
+};
+
 export function Layout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarState, setSidebarState] = useState<SidebarState>("full");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed((v) => !v)}
+        state={sidebarState}
+        onToggle={() => setSidebarState((s) => nextState[s])}
       />
 
       <div
         className={cn(
           "transition-all duration-300",
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-56"
+          marginMap[sidebarState]
         )}
       >
         <Topbar onMenuClick={() => setMobileOpen(true)} />
