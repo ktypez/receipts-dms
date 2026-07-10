@@ -5,8 +5,6 @@ import {
   FileText,
   X,
   AlertCircle,
-  CheckCircle2,
-  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useCategories } from "@/hooks/use-categories";
-import { uploadReceipt, getFileUrl } from "@/lib/api";
+import { uploadReceiptWithProgress, getFileUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { formatSize } from "@/lib/utils";
 
@@ -36,14 +34,41 @@ const ALLOWED_TYPES = [
   "image/webp",
   "application/pdf",
 ];
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 3 * 1024 * 1024;
+const COMPRESS_MAX = 2048;
+const COMPRESS_QUALITY = 0.8;
+
+async function compressImage(file: File): Promise<File> {
+  const img = await createImageBitmap(file);
+  let { width, height } = img;
+  if (width > COMPRESS_MAX || height > COMPRESS_MAX) {
+    const ratio = Math.min(COMPRESS_MAX / width, COMPRESS_MAX / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, width, height);
+  img.close();
+  const blob = await new Promise<Blob>((r) =>
+    canvas.toBlob((b) => r(b!), "image/webp", COMPRESS_QUALITY)
+  );
+  return new File([blob], file.name.replace(/\.\w+$/, ".webp"), {
+    type: "image/webp",
+  });
+}
 
 export function Upload() {
   const navigate = useNavigate();
   const { categories, loading: catsLoading } = useCategories();
   const [file, setFile] = useState<File | null>(null);
+  const [originalSize, setOriginalSize] = useState(0);
+  const [compressing, setCompressing] = useState(false);
   const [category, setCategory] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,28 +78,51 @@ export function Upload() {
     if (!ALLOWED_TYPES.includes(f.type)) {
       return "Invalid file type. Allowed: JPEG, PNG, WebP, PDF";
     }
-    if (f.size > MAX_SIZE) {
+    if (f.size > 10 * 1024 * 1024) {
       return "File too large. Maximum 10 MB";
     }
     return null;
   };
 
-  const handleFile = (f: File) => {
+  const handleFile = async (f: File) => {
     const err = validate(f);
     if (err) {
       setError(err);
-      setFile(null);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+      clearFileState();
       return;
     }
     setError(null);
-    setFile(f);
+    setOriginalSize(f.size);
+
     if (f.type.startsWith("image/")) {
-      setPreviewUrl(URL.createObjectURL(f));
+      setCompressing(true);
+      try {
+        const compressed = await compressImage(f);
+        setFile(compressed);
+        setPreviewUrl(URL.createObjectURL(compressed));
+      } catch {
+        setFile(f);
+        setPreviewUrl(URL.createObjectURL(f));
+      } finally {
+        setCompressing(false);
+      }
     } else {
+      setFile(f);
       setPreviewUrl(null);
     }
+  };
+
+  const clearFileState = () => {
+    setFile(null);
+    setOriginalSize(0);
+    setError(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
+
+  const clearFile = () => {
+    clearFileState();
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleDrop = (e: DragEvent) => {
@@ -96,19 +144,16 @@ export function Upload() {
     if (f) handleFile(f);
   };
 
-  const clearFile = () => {
-    setFile(null);
-    setError(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const handleUpload = async () => {
     if (!file || !category) return;
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const result = await uploadReceipt(file, category);
+      const result = await uploadReceiptWithProgress(
+        file,
+        category,
+        setUploadProgress
+      );
       toast.success("Upload successful");
       navigate(`/receipts/${result.id}`);
     } catch (e) {
@@ -125,11 +170,11 @@ export function Upload() {
           <CardTitle>Upload Receipt</CardTitle>
           <CardDescription>
             Drop a receipt file or click to select. Supported: JPEG, PNG, WebP,
-            PDF (max 10 MB).
+            PDF. Images are compressed to WebP for smaller storage.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!file ? (
+          {!file && !compressing ? (
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -147,7 +192,7 @@ export function Upload() {
                   Drop your receipt here, or click to browse
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  JPEG, PNG, WebP, PDF up to 10 MB
+                  JPEG, PNG, WebP, PDF (images compressed to WebP)
                 </p>
               </div>
               <input
@@ -157,6 +202,13 @@ export function Upload() {
                 className="hidden"
                 onChange={handleInputChange}
               />
+            </div>
+          ) : compressing ? (
+            <div className="flex flex-col items-center gap-3 py-12">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
+              <p className="text-sm text-muted-foreground">
+                Compressing image...
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -173,9 +225,18 @@ export function Upload() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium">{file.name}</p>
+                  <p className="truncate text-sm font-medium">{file?.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatSize(file.size)}
+                    {originalSize && file && originalSize !== file.size ? (
+                      <>
+                        <span className="line-through">
+                          {formatSize(originalSize)}
+                        </span>{" "}
+                        → {formatSize(file.size)}
+                      </>
+                    ) : (
+                      file && formatSize(file.size)
+                    )}
                   </p>
                 </div>
                 <Button
@@ -221,13 +282,23 @@ export function Upload() {
                 )}
               </div>
 
+              {uploading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Uploading...</span>
+                    <span className="font-medium">{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} />
+                </div>
+              )}
+
               <Button
                 className="w-full"
                 onClick={handleUpload}
                 disabled={!category || uploading}
               >
                 {uploading ? (
-                  <>Uploading...</>
+                  <>{uploadProgress}% — Uploading...</>
                 ) : (
                   <>
                     <UploadIcon className="mr-1 h-4 w-4" /> Upload Receipt

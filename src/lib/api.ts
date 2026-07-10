@@ -85,3 +85,35 @@ export async function uploadReceipt(
     body: form,
   });
 }
+
+export function uploadReceiptWithProgress(
+  file: File,
+  category: string,
+  onProgress: (pct: number) => void
+): Promise<UploadResponse> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("category", category);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", BASE + "/upload");
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    });
+
+    xhr.addEventListener("load", () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else reject(new Error(data.error || `HTTP ${xhr.status}`));
+      } catch {
+        reject(new Error(xhr.responseText || `HTTP ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener("error", () => reject(new Error("Network error")));
+    xhr.send(form);
+  });
+}
