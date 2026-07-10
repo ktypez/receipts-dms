@@ -23,17 +23,3 @@ export async function onRequestGet(context) {
     headers: { "Content-Type": "application/json" },
   });
 }
-
-export async function onRequestDelete(context) {
-  const { receipts_db: DB, BUCKET } = context.env;
-  const url = new URL(context.request.url);
-  const id = url.pathname.split("/").pop();
-
-  if (!id) return new Response("ไม่พบไอดี", { status: 400 });
-
-  await BUCKET.delete(id);
-
-  await DB.prepare("DELETE FROM receipts WHERE id = ?").bind(id).run();
-
-  return new Response(null, { status: 204 });
-}
