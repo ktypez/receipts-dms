@@ -24,7 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useCategories } from "@/hooks/use-categories";
-import { uploadReceiptWithProgress, getFileUrl } from "@/lib/api";
+import { uploadReceiptWithProgress } from "@/lib/api";
 import { toast } from "sonner";
 import { formatSize } from "@/lib/utils";
 

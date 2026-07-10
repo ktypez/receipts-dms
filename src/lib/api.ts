@@ -37,7 +37,7 @@ export async function deleteReceipt(id: string): Promise<void> {
   await request(`/receipts/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-export async function getFileUrl(id: string): Promise<string> {
+export function getFileUrl(id: string): string {
   return `${BASE}/file/${id}`;
 }
 
