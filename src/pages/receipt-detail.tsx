@@ -6,8 +6,20 @@ import {
   FileText,
   Download,
   AlertCircle,
+  Pencil,
+  Check,
+  X,
+  StickyNote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -21,16 +33,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useReceipts } from "@/hooks/use-receipts";
-import { formatDate, formatSize } from "@/lib/utils";
-import { getFileUrl } from "@/lib/api";
+import { useCategories } from "@/hooks/use-categories";
+import { formatDate, formatSize, stripExtension } from "@/lib/utils";
+import { getFileUrl, updateReceipt } from "@/lib/api";
 import { toast } from "sonner";
 
 export function ReceiptDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { receipts, loading, remove } = useReceipts();
+  const { receipts, loading, remove, reload } = useReceipts();
+  const { categories } = useCategories();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editFilename, setEditFilename] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
 
   const receipt = receipts.find((r) => r.id === id);
 
@@ -39,6 +59,39 @@ export function ReceiptDetail() {
       navigate("/receipts", { replace: true });
     }
   }, [loading, receipt, receipts, navigate]);
+
+  const startEditing = () => {
+    if (!receipt) return;
+    setEditFilename(stripExtension(receipt.filename));
+    setEditCategory(receipt.category);
+    setEditNotes(receipt.notes || "");
+    setEditMode(true);
+  };
+
+  const cancelEditing = () => {
+    setEditMode(false);
+  };
+
+  const handleSave = async () => {
+    if (!id) return;
+    const name = editFilename.trim();
+    if (!name) return;
+    setSaving(true);
+    try {
+      await updateReceipt(id, {
+        filename: name,
+        category: editCategory,
+        notes: editNotes,
+      });
+      setEditMode(false);
+      toast.success("Receipt updated");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -85,7 +138,9 @@ export function ReceiptDetail() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="text-xl font-semibold truncate">{receipt.filename}</h2>
+        <h2 className="text-xl font-semibold truncate">
+          {stripExtension(receipt.filename)}
+        </h2>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -94,12 +149,13 @@ export function ReceiptDetail() {
             <CardTitle>Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center rounded-lg border bg-muted/30 min-h-[300px]">
+            <div className="flex items-center justify-center rounded-lg border border-border bg-background min-h-[300px]">
               {isImage ? (
                 <img
                   src={getFileUrl(receipt.id)}
                   alt={receipt.filename}
-                  className="max-h-[600px] max-w-full object-contain"
+                  className="max-h-[600px] max-w-full object-contain cursor-pointer"
+                  onClick={() => setLightbox(true)}
                 />
               ) : isPdf ? (
                 <iframe
@@ -135,18 +191,41 @@ export function ReceiptDetail() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-xs text-muted-foreground">Filename</p>
-              <p className="text-sm font-medium break-all">
-                {receipt.filename}
-              </p>
+              {editMode ? (
+                <Input
+                  value={editFilename}
+                  onChange={(e) => setEditFilename(e.target.value)}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-sm font-medium break-all">
+                  {stripExtension(receipt.filename)}
+                </p>
+              )}
             </div>
 
             <Separator />
 
             <div>
               <p className="text-xs text-muted-foreground">Category</p>
-              <Badge variant="secondary" className="mt-1">
-                {receipt.category}
-              </Badge>
+              {editMode ? (
+                <Select value={editCategory} onValueChange={setEditCategory}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.name}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge variant="secondary" className="mt-1">
+                  {receipt.category}
+                </Badge>
+              )}
             </div>
 
             <Separator />
@@ -166,6 +245,27 @@ export function ReceiptDetail() {
             <Separator />
 
             <div>
+              <p className="text-xs text-muted-foreground">Notes</p>
+              {editMode ? (
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Add a note..."
+                  rows={3}
+                  className="mt-1 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              ) : receipt.notes ? (
+                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {receipt.notes}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground italic">No notes</p>
+              )}
+            </div>
+
+            <Separator />
+
+            <div>
               <p className="text-xs text-muted-foreground">Uploaded at</p>
               <p className="text-sm">{formatDate(receipt.uploaded_at)}</p>
             </div>
@@ -173,51 +273,84 @@ export function ReceiptDetail() {
             <Separator />
 
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" asChild>
-                <a
-                  href={getFileUrl(receipt.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Download className="mr-1 h-4 w-4" /> Open
-                </a>
-              </Button>
-              <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive" size="icon">
-                    <Trash2 className="h-4 w-4" />
+              {editMode ? (
+                <>
+                  <Button
+                    className="flex-1"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    <Check className="mr-1 h-4 w-4" />
+                    {saving ? "Saving..." : "Save"}
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete receipt</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to delete{" "}
-                      <strong>{receipt.filename}</strong>? This action cannot be
-                      undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setDeleteOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={handleDelete}
-                      disabled={deleting}
-                    >
-                      {deleting ? "Deleting..." : "Delete"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  <Button
+                    variant="outline"
+                    onClick={cancelEditing}
+                    disabled={saving}
+                  >
+                    <X className="mr-1 h-4 w-4" /> Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="default"
+                    className="flex-1"
+                    onClick={startEditing}
+                  >
+                    <Pencil className="mr-1 h-4 w-4" /> Edit
+                  </Button>
+                  <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive" size="icon">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Delete receipt</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to delete{" "}
+                          <strong>{receipt.filename}</strong>? This action cannot
+                          be undone.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setDeleteOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleDelete}
+                          disabled={deleting}
+                        >
+                          {deleting ? "Deleting..." : "Delete"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {lightbox && isImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setLightbox(false)}
+        >
+          <img
+            src={getFileUrl(receipt.id)}
+            alt={receipt.filename}
+            className="max-h-[95vh] max-w-[95vw] object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }

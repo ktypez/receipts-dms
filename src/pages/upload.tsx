@@ -5,6 +5,7 @@ import {
   FileText,
   X,
   AlertCircle,
+  StickyNote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,7 @@ export function Upload() {
   const [originalSize, setOriginalSize] = useState(0);
   const [compressing, setCompressing] = useState(false);
   const [category, setCategory] = useState("");
+  const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -152,7 +154,8 @@ export function Upload() {
       const result = await uploadReceiptWithProgress(
         file,
         category,
-        setUploadProgress
+        setUploadProgress,
+        notes
       );
       toast.success("Upload successful");
       navigate(`/receipts/${result.id}`);
@@ -220,7 +223,7 @@ export function Upload() {
                     className="h-16 w-16 rounded-md object-cover"
                   />
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-md border border-border bg-background">
                     <FileText className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
@@ -255,6 +258,22 @@ export function Upload() {
                   {error}
                 </div>
               )}
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <span className="text-xs text-muted-foreground">(optional)</span>
+                </div>
+                <textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add a note..."
+                  rows={3}
+                  disabled={uploading}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>

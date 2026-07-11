@@ -21,6 +21,11 @@ export function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+export function stripExtension(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(0, dot) : name;
+}
+
 export function formatDateShort(iso: string): string {
   return new Intl.DateTimeFormat("th-TH", {
     year: "numeric",

@@ -8,14 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -28,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCategories } from "@/hooks/use-categories";
 import { useReceipts } from "@/hooks/use-receipts";
-import { formatDateShort } from "@/lib/utils";
+
 import { toast } from "sonner";
 
 export function Categories() {
@@ -107,16 +99,17 @@ export function Categories() {
           <CardTitle>Manage Categories</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex gap-2">
+          <div className="mb-6 flex gap-3">
             <Input
-              placeholder="New category name"
+              placeholder="ชื่อหมวดหมู่ใหม่"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              className="h-10"
             />
             <Button onClick={handleAdd} disabled={!newName.trim() || adding}>
               <Plus className="mr-1 h-4 w-4" />
-              {adding ? "Adding..." : "Add"}
+              {adding ? "กำลังเพิ่ม..." : "เพิ่ม"}
             </Button>
           </div>
 
@@ -129,129 +122,113 @@ export function Categories() {
               No categories yet. Add one above.
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Receipts</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="w-24 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">
-                        {editId === c.id ? (
-                          <div className="flex gap-2">
-                            <Input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleEdit(c.id);
-                                if (e.key === "Escape") setEditId(null);
-                              }}
-                              autoFocus
-                              className="h-8"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => handleEdit(c.id)}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditId(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          c.name
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {receiptCounts[c.name] || 0}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatDateShort(c.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+            <div className="space-y-2">
+              {categories.map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-lg border border-border bg-card"
+                >
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium">{c.name}</p>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0">
+                      {receiptCounts[c.name] || 0}
+                    </Badge>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setEditId(c.id);
+                          setEditName(c.name);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Dialog
+                        open={deleteId === c.id}
+                        onOpenChange={(open) =>
+                          setDeleteId(open ? c.id : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                              setEditId(c.id);
-                              setEditName(c.name);
-                            }}
+                            className="text-destructive hover:text-destructive"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                          <Dialog
-                            open={deleteId === c.id}
-                            onOpenChange={(open) =>
-                              setDeleteId(open ? c.id : null)
-                            }
-                          >
-                            <DialogTrigger asChild>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete category</DialogTitle>
+                            <DialogDescription>
+                              {(receiptCounts[c.name] || 0) > 0 ? (
+                                <span className="text-destructive">
+                                  Cannot delete "{c.name}" —{" "}
+                                  {receiptCounts[c.name]} receipt(s) are
+                                  using this category. Reassign them first.
+                                </span>
+                              ) : (
+                                <span>
+                                  Are you sure you want to delete{" "}
+                                  <strong>{c.name}</strong>? This action
+                                  cannot be undone.
+                                </span>
+                              )}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setDeleteId(null)}
+                            >
+                              Cancel
+                            </Button>
+                            {(receiptCounts[c.name] || 0) === 0 && (
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
+                                variant="destructive"
+                                onClick={handleDelete}
+                                disabled={deleting}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                {deleting ? "Deleting..." : "Delete"}
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Delete category</DialogTitle>
-                                <DialogDescription>
-                                  {(receiptCounts[c.name] || 0) > 0 ? (
-                                    <span className="text-destructive">
-                                      Cannot delete "{c.name}" —{" "}
-                                      {receiptCounts[c.name]} receipt(s) are
-                                      using this category. Reassign them first.
-                                    </span>
-                                  ) : (
-                                    <span>
-                                      Are you sure you want to delete{" "}
-                                      <strong>{c.name}</strong>? This action
-                                      cannot be undone.
-                                    </span>
-                                  )}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <DialogFooter>
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setDeleteId(null)}
-                                >
-                                  Cancel
-                                </Button>
-                                {(receiptCounts[c.name] || 0) === 0 && (
-                                  <Button
-                                    variant="destructive"
-                                    onClick={handleDelete}
-                                    disabled={deleting}
-                                  >
-                                    {deleting ? "Deleting..." : "Delete"}
-                                  </Button>
-                                )}
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                            )}
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+
+                  {editId === c.id && (
+                    <div className="border-t border-border px-4 py-3">
+                      <div className="flex gap-3">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleEdit(c.id);
+                            if (e.key === "Escape") setEditId(null);
+                          }}
+                          autoFocus
+                          className="flex-1"
+                        />
+                        <Button onClick={() => handleEdit(c.id)}>
+                          บันทึก
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setEditId(null)}
+                        >
+                          ยกเลิก
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

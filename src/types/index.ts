@@ -5,6 +5,7 @@ export interface Receipt {
   content_type: string;
   size: number;
   uploaded_at: string;
+  notes?: string;
 }
 
 export interface Category {
@@ -18,6 +19,7 @@ export interface UploadResponse {
   filename: string;
   category: string;
   uploaded_at: string;
+  notes?: string;
 }
 
 export interface ApiError {

@@ -33,6 +33,28 @@ export async function getReceipts(params?: {
   return request<Receipt[]>(`/receipts${query ? "?" + query : ""}`);
 }
 
+export async function renameReceipt(
+  id: string,
+  filename: string
+): Promise<Receipt> {
+  return request<Receipt>(`/receipts/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename }),
+  });
+}
+
+export async function updateReceipt(
+  id: string,
+  data: { filename?: string; category?: string; notes?: string }
+): Promise<Receipt> {
+  return request<Receipt>(`/receipts/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function deleteReceipt(id: string): Promise<void> {
   await request(`/receipts/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
@@ -75,11 +97,13 @@ export async function deleteCategory(id: string): Promise<void> {
 
 export async function uploadReceipt(
   file: File,
-  category: string
+  category: string,
+  notes?: string
 ): Promise<UploadResponse> {
   const form = new FormData();
   form.append("file", file);
   form.append("category", category);
+  if (notes) form.append("notes", notes);
   return request<UploadResponse>("/upload", {
     method: "POST",
     body: form,
@@ -89,12 +113,14 @@ export async function uploadReceipt(
 export function uploadReceiptWithProgress(
   file: File,
   category: string,
-  onProgress: (pct: number) => void
+  onProgress: (pct: number) => void,
+  notes?: string
 ): Promise<UploadResponse> {
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append("file", file);
     form.append("category", category);
+    if (notes) form.append("notes", notes);
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", BASE + "/upload");

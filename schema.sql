@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS receipts (
   category     TEXT NOT NULL,
   content_type TEXT NOT NULL,
   size         INTEGER NOT NULL,
-  uploaded_at  TEXT NOT NULL
+  uploaded_at  TEXT NOT NULL,
+  notes        TEXT
 );
 
 CREATE TABLE IF NOT EXISTS categories (

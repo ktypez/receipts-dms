@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Trash2, Eye, AlertCircle } from "lucide-react";
+import { Plus, Search, Trash2, LayoutGrid, TableIcon, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,8 +31,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useReceipts } from "@/hooks/use-receipts";
 import { useCategories } from "@/hooks/use-categories";
-import { formatDate, formatSize } from "@/lib/utils";
+
 import { getFileUrl } from "@/lib/api";
+import { stripExtension } from "@/lib/utils";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
@@ -44,17 +45,18 @@ export function Receipts() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<"table" | "card">("table");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     let items = receipts;
-    if (categoryFilter) {
+    if (categoryFilter && categoryFilter !== "all") {
       items = items.filter((r) => r.category === categoryFilter);
     }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      items = items.filter((r) => r.filename.toLowerCase().includes(q));
+      items = items.filter((r) => r.filename.toLowerCase().includes(q) || (r.notes && r.notes.toLowerCase().includes(q)));
     }
     return items;
   }, [receipts, categoryFilter, search]);
@@ -114,7 +116,7 @@ export function Receipts() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by filename..."
+                placeholder="Search by filename or notes..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9"
@@ -147,108 +149,145 @@ export function Receipts() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">File</TableHead>
-                      <TableHead>Filename</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="w-24 text-right">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paged.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>
-                          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-muted">
-                            {r.content_type.startsWith("image/") ? (
-                              <img
-                                src={getFileUrl(r.id)}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <Link
-                            to={`/receipts/${r.id}`}
-                            className="hover:underline"
-                          >
-                            {r.filename}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{r.category}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatSize(r.size)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatDate(r.uploaded_at)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/receipts/${r.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Dialog
-                              open={deleteId === r.id}
-                              onOpenChange={(open) =>
-                                setDeleteId(open ? r.id : null)
-                              }
-                            >
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Delete receipt</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to delete{" "}
-                                    <strong>{r.filename}</strong>? This action
-                                    cannot be undone.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <DialogFooter>
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => setDeleteId(null)}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    onClick={handleDelete}
-                                    disabled={deleting}
-                                  >
-                                    {deleting ? "Deleting..." : "Delete"}
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="mb-3 flex items-center justify-end gap-1">
+                <Button
+                  variant={view === "table" ? "default" : "ghost"}
+                  size="icon"
+                  onClick={() => setView("table")}
+                >
+                  <TableIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={view === "card" ? "default" : "ghost"}
+                  size="icon"
+                  onClick={() => setView("card")}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
               </div>
+
+              {view === "table" ? (
+                <div className="overflow-x-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>File</TableHead>
+                        <TableHead className="min-w-[200px]">Filename</TableHead>
+                        <TableHead className="min-w-[140px]">Category</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paged.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell>
+                            <Link to={`/receipts/${r.id}`}>
+                              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-border bg-background hover:ring-2 hover:ring-ring">
+                                {r.content_type.startsWith("image/") ? (
+                                  <img
+                                    src={getFileUrl(r.id)}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                            </Link>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <Link
+                              to={`/receipts/${r.id}`}
+                              className="hover:underline"
+                            >
+                              {stripExtension(r.filename)}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{r.category}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {paged.map((r) => (
+                    <div
+                      key={r.id}
+                      className="group relative overflow-hidden rounded-lg border border-border bg-card"
+                    >
+                      <Link to={`/receipts/${r.id}`}>
+                        <div className="flex aspect-[4/3] items-center justify-center bg-background">
+                          {r.content_type.startsWith("image/") ? (
+                            <img
+                              src={getFileUrl(r.id)}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                          )}
+                        </div>
+                      </Link>
+                      <div className="p-2">
+                        <Link
+                          to={`/receipts/${r.id}`}
+                          className="block truncate text-sm font-medium hover:underline"
+                        >
+                          {stripExtension(r.filename)}
+                        </Link>
+                        <div className="mt-1 flex items-center gap-1">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {r.category}
+                          </Badge>
+                          <Dialog
+                            open={deleteId === r.id}
+                            onOpenChange={(open) =>
+                              setDeleteId(open ? r.id : null)
+                            }
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="ml-auto h-6 w-6 text-destructive/60 opacity-0 hover:text-destructive group-hover:opacity-100"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Delete receipt</DialogTitle>
+                                <DialogDescription>
+                                  Are you sure you want to delete{" "}
+                                  <strong>{r.filename}</strong>? This action
+                                  cannot be undone.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setDeleteId(null)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={handleDelete}
+                                  disabled={deleting}
+                                >
+                                  {deleting ? "Deleting..." : "Delete"}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                 <span>

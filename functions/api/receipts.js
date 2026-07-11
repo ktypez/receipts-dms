@@ -12,13 +12,14 @@ export async function onRequestGet(context) {
     params.push(category);
   }
   if (q) {
-    where.push("filename LIKE ?");
-    params.push(`%${q}%`);
+    where.push("(filename LIKE ? OR notes LIKE ?)");
+    params.push(`%${q}%`, `%${q}%`);
   }
   if (where.length) sql += " WHERE " + where.join(" AND ");
   sql += " ORDER BY uploaded_at DESC";
 
   const { results } = await DB.prepare(sql).bind(...params).all();
+
   return new Response(JSON.stringify(results), {
     headers: { "Content-Type": "application/json" },
   });

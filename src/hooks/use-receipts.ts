@@ -32,5 +32,15 @@ export function useReceipts() {
     []
   );
 
-  return { receipts, loading, error, reload: load, remove };
+  const rename = useCallback(
+    async (id: string, filename: string) => {
+      const updated = await api.renameReceipt(id, filename);
+      setReceipts((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, filename: updated.filename } : r))
+      );
+    },
+    []
+  );
+
+  return { receipts, loading, error, reload: load, remove, rename };
 }

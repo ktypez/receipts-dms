@@ -46,9 +46,9 @@ function RecentReceipt({ r }: { r: Receipt }) {
   return (
     <Link
       to={`/receipts/${r.id}`}
-      className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
+      className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-[rgba(28,28,28,0.04)]"
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted overflow-hidden">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-background overflow-hidden">
         {r.content_type.startsWith("image/") ? (
           <img
             src={getFileUrl(r.id)}

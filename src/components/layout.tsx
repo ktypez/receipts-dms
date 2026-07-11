@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router";
 import { Sidebar } from "@/components/sidebar";
+import { BottomNav } from "@/components/bottom-nav";
 import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -12,16 +13,13 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar
-        open={sidebarOpen}
-        isMobile={isMobile}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {isMobile ? <BottomNav /> : <Sidebar open={sidebarOpen} />}
 
       <div
         className={cn(
           "transition-all duration-300",
-          !isMobile && sidebarOpen ? "ml-56" : "ml-0"
+          !isMobile && sidebarOpen && "ml-56",
+          isMobile && "pb-16"
         )}
       >
         <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
