@@ -31,8 +31,8 @@ export function Sidebar({ open }: SidebarProps) {
       )}
     >
       <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <span className="flex items-center gap-2 font-semibold tracking-tight">
-          <Receipt className="h-5 w-5 text-foreground" />
+        <span className="flex items-center gap-2 font-semibold tracking-tight text-foreground">
+          <Receipt className="h-5 w-5" />
           Receipts DMS
         </span>
       </div>
