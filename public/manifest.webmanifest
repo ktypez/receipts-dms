@@ -1,6 +1,6 @@
 {
-  "name": "Receipts DMS",
-  "short_name": "Receipts",
+  "name": "Paper",
+  "short_name": "Paper",
   "description": "Document management system for receipts",
   "start_url": "/",
   "scope": "/",
