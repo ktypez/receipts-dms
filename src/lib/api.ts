@@ -142,6 +142,46 @@ export async function deleteSubcategory(
   );
 }
 
+export async function reorderCategories(
+  orderedIds: string[]
+): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/categories/reorder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ordered_ids: orderedIds }),
+  });
+}
+
+export async function reorderSubcategories(
+  categoryId: string,
+  orderedIds: string[]
+): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(
+    `/categories/${encodeURIComponent(categoryId)}/subcategories/reorder`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ordered_ids: orderedIds }),
+    }
+  );
+}
+
+export async function moveSubcategory(
+  fromCategoryId: string,
+  subId: string,
+  toCategoryId: string,
+  orderedIds: string[]
+): Promise<{ id: string; category_id: string; name: string }> {
+  return request<{ id: string; category_id: string; name: string }>(
+    `/categories/${encodeURIComponent(fromCategoryId)}/subcategories/${encodeURIComponent(subId)}/move`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category_id: toCategoryId, ordered_ids: orderedIds }),
+    }
+  );
+}
+
 export async function uploadReceipt(
   file: File,
   category: string,

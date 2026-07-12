@@ -2,7 +2,7 @@ export async function onRequestGet(context) {
   const { receipts_db: DB } = context.env;
   const categoryId = context.params.id;
   const { results } = await DB.prepare(
-    "SELECT * FROM subcategories WHERE category_id = ? ORDER BY created_at"
+    "SELECT * FROM subcategories WHERE category_id = ? ORDER BY sort_order, created_at"
   )
     .bind(categoryId)
     .all();

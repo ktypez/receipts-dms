@@ -2,6 +2,24 @@ import { useState, useEffect, useCallback } from "react";
 import type { Category, Subcategory } from "@/types";
 import * as api from "@/lib/api";
 
+function sortCats(list: Category[]): Category[] {
+  return [...list].sort((a, b) => {
+    const ao = (a as Category & { sort_order?: number }).sort_order ?? 0;
+    const bo = (b as Category & { sort_order?: number }).sort_order ?? 0;
+    if (ao !== bo) return ao - bo;
+    return a.created_at.localeCompare(b.created_at);
+  });
+}
+
+function sortSubs(list: Subcategory[]): Subcategory[] {
+  return [...list].sort((a, b) => {
+    const ao = (a as Subcategory & { sort_order?: number }).sort_order ?? 0;
+    const bo = (b as Subcategory & { sort_order?: number }).sort_order ?? 0;
+    if (ao !== bo) return ao - bo;
+    return a.created_at.localeCompare(b.created_at);
+  });
+}
+
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Record<string, Subcategory[]>>({});
@@ -13,7 +31,7 @@ export function useCategories() {
     setError(null);
     try {
       const data = await api.getCategories();
-      setCategories(data);
+      setCategories(sortCats(data));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load categories");
     } finally {
@@ -28,7 +46,7 @@ export function useCategories() {
   const loadSubcategories = useCallback(async (categoryId: string) => {
     try {
       const data = await api.getSubcategories(categoryId);
-      setSubcategories((prev) => ({ ...prev, [categoryId]: data }));
+      setSubcategories((prev) => ({ ...prev, [categoryId]: sortSubs(data) }));
       return data;
     } catch {
       return [];
@@ -91,6 +109,91 @@ export function useCategories() {
     }));
   }, []);
 
+  const reorderCats = useCallback(async (orderedIds: string[]) => {
+    const prev = categories;
+    setCategories(
+      sortCats(
+        orderedIds
+          .map((id) => prev.find((c) => c.id === id))
+          .filter((c): c is Category => Boolean(c))
+      )
+    );
+    try {
+      await api.reorderCategories(orderedIds);
+    } catch (e) {
+      load();
+      throw e;
+    }
+  }, [categories, load]);
+
+  const reorderSubs = useCallback(
+    async (categoryId: string, orderedIds: string[]) => {
+      const prev = subcategories[categoryId] || [];
+      setSubcategories((prevState) => ({
+        ...prevState,
+        [categoryId]: sortSubs(
+          orderedIds
+            .map((id) => prev.find((s) => s.id === id))
+            .filter((s): s is Subcategory => Boolean(s))
+        ),
+      }));
+      try {
+        await api.reorderSubcategories(categoryId, orderedIds);
+      } catch (e) {
+        loadSubcategories(categoryId);
+        throw e;
+      }
+    },
+    [subcategories, loadSubcategories]
+  );
+
+  const moveSub = useCallback(
+    async (
+      fromCategoryId: string,
+      subId: string,
+      toCategoryId: string,
+      orderedIds: string[]
+    ) => {
+      const moving = (subcategories[fromCategoryId] || []).find(
+        (s) => s.id === subId
+      );
+      if (!moving) return;
+      setSubcategories((prevState) => {
+        const from = (prevState[fromCategoryId] || []).filter(
+          (s) => s.id !== subId
+        );
+        const targetSorted = orderedIds.filter((id) => id !== subId);
+        const toList = sortSubs(
+          targetSorted
+            .map((id) => (prevState[toCategoryId] || []).find((s) => s.id === id))
+            .filter((s): s is Subcategory => Boolean(s))
+        );
+        return {
+          ...prevState,
+          [fromCategoryId]: from,
+          [toCategoryId]: [...toList, { ...moving, category_id: toCategoryId }],
+        };
+      });
+      try {
+        await api.moveSubcategory(
+          fromCategoryId,
+          subId,
+          toCategoryId,
+          orderedIds
+        );
+        await Promise.all([
+          loadSubcategories(fromCategoryId),
+          loadSubcategories(toCategoryId),
+        ]);
+      } catch (e) {
+        loadSubcategories(fromCategoryId);
+        loadSubcategories(toCategoryId);
+        throw e;
+      }
+    },
+    [subcategories, loadSubcategories]
+  );
+
   return {
     categories,
     subcategories,
@@ -104,5 +207,8 @@ export function useCategories() {
     createSub,
     updateSub,
     removeSub,
+    reorderCats,
+    reorderSubs,
+    moveSub,
   };
 }

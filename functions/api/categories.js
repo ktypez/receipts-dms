@@ -1,6 +1,6 @@
 export async function onRequestGet(context) {
   const { receipts_db: DB } = context.env;
-  const { results } = await DB.prepare("SELECT * FROM categories ORDER BY created_at").all();
+  const { results } = await DB.prepare("SELECT * FROM categories ORDER BY sort_order, created_at").all();
   return new Response(JSON.stringify(results), {
     headers: { "Content-Type": "application/json" },
   });

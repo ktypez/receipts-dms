@@ -39,6 +39,9 @@ export function Categories() {
     createSub,
     updateSub,
     removeSub,
+    reorderCats,
+    reorderSubs,
+    moveSub,
   } = useCategories();
   const { receipts } = useReceipts();
   const [newName, setNewName] = useState("");
@@ -55,6 +58,14 @@ export function Categories() {
     null
   );
   const [editSubName, setEditSubName] = useState("");
+
+  const [dragCat, setDragCat] = useState<string | null>(null);
+  const [dragSub, setDragSub] = useState<{ cat: string; id: string } | null>(
+    null
+  );
+  const [catDropTarget, setCatDropTarget] = useState<string | null>(null);
+  const [subDropTarget, setSubDropTarget] = useState<string | null>(null);
+  const [movePending, setMovePending] = useState(false);
 
   const receiptCounts = receipts.reduce<Record<string, number>>((acc, r) => {
     acc[r.category] = (acc[r.category] || 0) + 1;
@@ -152,6 +163,110 @@ export function Categories() {
     }
   };
 
+  const computeSubOrderedIds = (categoryId: string, excludeId?: string) => {
+    return (subcategories[categoryId] || [])
+      .map((s) => s.id)
+      .filter((id) => id !== excludeId);
+  };
+
+  const handleCatDragStart = (id: string) => (e: React.DragEvent) => {
+    setDragCat(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `cat:${id}`);
+  };
+
+  const handleCatDrop = async (targetId: string) => {
+    if (!dragCat || dragCat === targetId) {
+      setDragCat(null);
+      return;
+    }
+    const ordered = categories
+      .map((c) => c.id)
+      .filter((id) => id !== dragCat);
+    const idx = ordered.indexOf(targetId);
+    ordered.splice(idx, 0, dragCat);
+    setDragCat(null);
+    try {
+      await reorderCats(ordered);
+      toast.success("Categories reordered");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to reorder");
+    }
+  };
+
+  const handleSubDragStart =
+    (categoryId: string, subId: string) => (e: React.DragEvent) => {
+      setDragSub({ cat: categoryId, id: subId });
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", `sub:${categoryId}:${subId}`);
+    };
+
+  const handleSubDropOnSub = async (
+    targetCat: string,
+    targetSubId: string
+  ) => {
+    if (!dragSub) {
+      setDragSub(null);
+      setSubDropTarget(null);
+      return;
+    }
+    const { cat: fromCat, id: subId } = dragSub;
+    setDragSub(null);
+    setSubDropTarget(null);
+
+    if (fromCat === targetCat) {
+      if (subId === targetSubId) return;
+      const ordered = computeSubOrderedIds(targetCat);
+      const idx = ordered.indexOf(targetSubId);
+      ordered.splice(idx, 0, subId);
+      try {
+        await reorderSubs(targetCat, ordered);
+        toast.success("Sub-categories reordered");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to reorder");
+      }
+    } else {
+      const targetOrdered = computeSubOrderedIds(targetCat);
+      const idx = targetOrdered.indexOf(targetSubId);
+      targetOrdered.splice(idx, 0, subId);
+      setMovePending(true);
+      try {
+        await moveSub(fromCat, subId, targetCat, targetOrdered);
+        toast.success("Sub-category moved");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to move");
+      } finally {
+        setMovePending(false);
+      }
+    }
+  };
+
+  const handleSubDropOnCategory = async (targetCat: string) => {
+    if (!dragSub) {
+      setDragSub(null);
+      setCatDropTarget(null);
+      return;
+    }
+    const { cat: fromCat, id: subId } = dragSub;
+    setDragSub(null);
+    setCatDropTarget(null);
+    if (fromCat === targetCat) return;
+
+    const targetOrdered = [
+      ...computeSubOrderedIds(targetCat),
+      subId,
+    ];
+    setMovePending(true);
+    try {
+      await moveSub(fromCat, subId, targetCat, targetOrdered);
+      toast.success("Sub-category moved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to move");
+    } finally {
+      setMovePending(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="flex flex-col items-center gap-4 py-20">
@@ -171,6 +286,9 @@ export function Categories() {
           <CardTitle>Manage Categories</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="mb-4 text-xs text-muted-foreground">
+            คลุมแล้วลากเพื่อเรียงลำดับหมวดหมู่ และลากหมวดหมู่ย่อยไปหมวดหมู่อื่นได้
+          </p>
           <div className="mb-6 flex gap-3">
             <Input
               placeholder="ชื่อหมวดหมู่ใหม่"
@@ -198,7 +316,27 @@ export function Categories() {
               {categories.map((c) => (
                 <div
                   key={c.id}
-                  className="rounded-lg border border-border bg-card"
+                  draggable
+                  onDragStart={handleCatDragStart(c.id)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (dragCat) setCatDropTarget(c.id);
+                  }}
+                  onDragLeave={() => {
+                    if (catDropTarget === c.id) setCatDropTarget(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleCatDrop(c.id);
+                  }}
+                  className={`rounded-lg border border-border bg-card ${
+                    dragCat === c.id ? "opacity-50" : ""
+                  } ${
+                    catDropTarget === c.id && dragCat
+                      ? "ring-2 ring-ring"
+                      : ""
+                  }`}
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
                     <button
@@ -311,7 +449,26 @@ export function Categories() {
                   )}
 
                   {expanded[c.id] && (
-                    <div className="border-t border-border px-4 py-3 pl-11 space-y-2">
+                    <div
+                      className={`border-t border-border px-4 py-3 pl-11 space-y-2 ${
+                        catDropTarget === c.id && dragSub
+                          ? "ring-2 ring-inset ring-ring rounded-md"
+                          : ""
+                      }`}
+                      onDragOver={(e) => {
+                        if (!dragSub) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        setCatDropTarget(c.id);
+                      }}
+                      onDragLeave={() => {
+                        if (catDropTarget === c.id) setCatDropTarget(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleSubDropOnCategory(c.id);
+                      }}
+                    >
                       {(subcategories[c.id] || []).length === 0 ? (
                         <p className="text-xs text-muted-foreground py-1">
                           ยังไม่มีหมวดหมู่ย่อย
@@ -320,7 +477,30 @@ export function Categories() {
                         (subcategories[c.id] || []).map((s) => (
                           <div
                             key={s.id}
-                            className="flex items-center gap-2 rounded-md border border-border/60 bg-background px-3 py-2"
+                            draggable={
+                              !(editSub && editSub.id === s.id) && !movePending
+                            }
+                            onDragStart={handleSubDragStart(c.id, s.id)}
+                            onDragOver={(e) => {
+                              if (!dragSub) return;
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                              setSubDropTarget(s.id);
+                            }}
+                            onDragLeave={() => {
+                              if (subDropTarget === s.id) setSubDropTarget(null);
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              handleSubDropOnSub(c.id, s.id);
+                            }}
+                            className={`flex items-center gap-2 rounded-md border border-border/60 bg-background px-3 py-2 ${
+                              dragSub?.id === s.id ? "opacity-50" : ""
+                            } ${
+                              subDropTarget === s.id && dragSub
+                                ? "ring-2 ring-ring"
+                                : ""
+                            }`}
                           >
                             {editSub?.id === s.id ? (
                               <div className="flex flex-1 gap-2">
