@@ -69,7 +69,7 @@ export function Receipts() {
     setDeleting(true);
     try {
       await remove(deleteId);
-      toast.success("Receipt deleted");
+      toast.success("Document deleted");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to delete");
     } finally {
@@ -104,7 +104,7 @@ export function Receipts() {
     <div className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>All Receipts</CardTitle>
+          <CardTitle>All Documents</CardTitle>
           <Button asChild>
             <Link to="/upload">
               <Plus className="mr-1 h-4 w-4" /> Upload
@@ -144,8 +144,8 @@ export function Receipts() {
           ) : paged.length === 0 ? (
             <div className="py-20 text-center text-muted-foreground">
               {receipts.length === 0
-                ? "No receipts yet."
-                : "No receipts match your filters."}
+                ? "No documents yet."
+                : "No documents match your filters."}
             </div>
           ) : (
             <>
@@ -203,7 +203,14 @@ export function Receipts() {
                             </Link>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{r.category}</Badge>
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="secondary">{r.category}</Badge>
+                              {r.owner && (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  {r.owner}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -241,6 +248,14 @@ export function Receipts() {
                           <Badge variant="secondary" className="text-[10px]">
                             {r.category}
                           </Badge>
+                          {r.owner && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] text-muted-foreground"
+                            >
+                              {r.owner}
+                            </Badge>
+                          )}
                           <Dialog
                             open={deleteId === r.id}
                             onOpenChange={(open) =>

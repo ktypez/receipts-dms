@@ -1,4 +1,4 @@
-import { Sun, Moon, Receipt, HardDrive, LogOut } from "lucide-react";
+import { Sun, Moon, FileText, HardDrive, LogOut } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -55,7 +55,7 @@ export function Settings() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Total receipts</span>
+              <span className="text-sm">Total documents</span>
             </div>
             <span className="text-sm font-medium">{receipts.length}</span>
           </div>
@@ -78,10 +78,10 @@ export function Settings() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Receipt className="h-4 w-4" />
-            <span className="font-medium text-foreground">Receipts DMS</span>
+            <FileText className="h-4 w-4" />
+            <span className="font-medium text-foreground">Paper</span>
           </div>
-          <p>Version 2.0.0 — Document Management System for personal use.</p>
+          <p>Version 2.0.0 — Personal document storage.</p>
           <Separator />
           <p>
             Built with React, shadcn/ui, and Cloudflare (D1 + R2 + Pages).

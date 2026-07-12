@@ -48,7 +48,7 @@ export function ReceiptDetail() {
   const [editMode, setEditMode] = useState(false);
   const [editFilename, setEditFilename] = useState("");
   const [editCategory, setEditCategory] = useState("");
-  const [editSubcategory, setEditSubcategory] = useState("");
+  const [editOwner, setEditOwner] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -65,7 +65,7 @@ export function ReceiptDetail() {
     if (!receipt) return;
     setEditFilename(stripExtension(receipt.filename));
     setEditCategory(receipt.category);
-    setEditSubcategory(receipt.subcategory || "");
+    setEditOwner(receipt.owner || "");
     setEditNotes(receipt.notes || "");
     setEditMode(true);
   };
@@ -83,7 +83,7 @@ export function ReceiptDetail() {
       await updateReceipt(id, {
         filename: name,
         category: editCategory,
-        subcategory: editSubcategory || null,
+        owner: editOwner || null,
         notes: editNotes,
       });
       setEditMode(false);
@@ -124,7 +124,7 @@ export function ReceiptDetail() {
         <AlertCircle className="h-10 w-10 text-muted-foreground" />
         <p className="text-muted-foreground">Receipt not found</p>
         <Button variant="outline" asChild>
-          <Link to="/receipts">Back to receipts</Link>
+          <Link to="/receipts">Back to documents</Link>
         </Button>
       </div>
     );
@@ -234,17 +234,17 @@ export function ReceiptDetail() {
             <Separator />
 
             <div>
-              <p className="text-xs text-muted-foreground">Sub-category</p>
+              <p className="text-xs text-muted-foreground">Owner / Folder</p>
               {editMode ? (
                 <Input
-                  value={editSubcategory}
-                  onChange={(e) => setEditSubcategory(e.target.value)}
+                  value={editOwner}
+                  onChange={(e) => setEditOwner(e.target.value)}
                   placeholder="(optional)"
                   className="mt-1"
                 />
-              ) : receipt.subcategory ? (
+              ) : receipt.owner ? (
                 <Badge variant="outline" className="mt-1">
-                  {receipt.subcategory}
+                  {receipt.owner}
                 </Badge>
               ) : (
                 <p className="mt-1 text-sm text-muted-foreground italic">

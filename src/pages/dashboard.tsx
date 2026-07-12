@@ -101,7 +101,7 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           icon={ReceiptText}
-          label="Total Receipts"
+          label="Total Documents"
           value={receipts.length}
           href="/receipts"
         />
@@ -121,7 +121,7 @@ export function Dashboard() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Receipts</CardTitle>
+          <CardTitle>Recent Documents</CardTitle>
           <Button variant="outline" size="sm" asChild>
             <Link to="/receipts">
               View all <ArrowRight className="ml-1 h-4 w-4" />
@@ -133,10 +133,10 @@ export function Dashboard() {
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <Upload className="h-10 w-10 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
-                No receipts yet. Upload your first receipt!
+                No documents yet. Upload your first document!
               </p>
               <Button asChild>
-                <Link to="/upload">Upload Receipt</Link>
+                <Link to="/upload">Upload Document</Link>
               </Button>
             </div>
           ) : (

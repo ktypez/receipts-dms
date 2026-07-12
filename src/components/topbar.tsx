@@ -6,7 +6,7 @@ import { useLocation } from "react-router";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
-  "/receipts": "Receipts",
+  "/receipts": "Documents",
   "/upload": "Upload",
   "/categories": "Categories",
   "/settings": "Settings",
@@ -19,7 +19,7 @@ interface TopbarProps {
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const location = useLocation();
   const isMobile = useMediaQuery("(max-width: 1023px)");
-  const title = pageTitles[location.pathname] || "Receipts DMS";
+  const title = pageTitles[location.pathname] || "Paper";
 
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 lg:px-6">

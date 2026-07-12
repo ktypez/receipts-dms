@@ -1,4 +1,4 @@
-import type { Receipt, Category, Subcategory, UploadResponse, ApiError } from "@/types";
+import type { Receipt, Category, UploadResponse, ApiError } from "@/types";
 
 const BASE = "/api";
 
@@ -46,7 +46,7 @@ export async function renameReceipt(
 
 export async function updateReceipt(
   id: string,
-  data: { filename?: string; category?: string; subcategory?: string; notes?: string }
+  data: { filename?: string; category?: string; owner?: string; notes?: string }
 ): Promise<Receipt> {
   return request<Receipt>(`/receipts/${encodeURIComponent(id)}`, {
     method: "PUT",
@@ -95,53 +95,6 @@ export async function deleteCategory(id: string): Promise<void> {
   });
 }
 
-export async function getSubcategories(
-  categoryId: string
-): Promise<Subcategory[]> {
-  return request<Subcategory[]>(
-    `/categories/${encodeURIComponent(categoryId)}/subcategories`
-  );
-}
-
-export async function createSubcategory(
-  categoryId: string,
-  name: string
-): Promise<Subcategory> {
-  return request<Subcategory>(
-    `/categories/${encodeURIComponent(categoryId)}/subcategories`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    }
-  );
-}
-
-export async function updateSubcategory(
-  categoryId: string,
-  subId: string,
-  name: string
-): Promise<{ id: string; name: string }> {
-  return request<{ id: string; name: string }>(
-    `/categories/${encodeURIComponent(categoryId)}/subcategories/${encodeURIComponent(subId)}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    }
-  );
-}
-
-export async function deleteSubcategory(
-  categoryId: string,
-  subId: string
-): Promise<void> {
-  await request(
-    `/categories/${encodeURIComponent(categoryId)}/subcategories/${encodeURIComponent(subId)}`,
-    { method: "DELETE" }
-  );
-}
-
 export async function reorderCategories(
   orderedIds: string[]
 ): Promise<{ ok: boolean }> {
@@ -152,46 +105,16 @@ export async function reorderCategories(
   });
 }
 
-export async function reorderSubcategories(
-  categoryId: string,
-  orderedIds: string[]
-): Promise<{ ok: boolean }> {
-  return request<{ ok: boolean }>(
-    `/categories/${encodeURIComponent(categoryId)}/subcategories/reorder`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ordered_ids: orderedIds }),
-    }
-  );
-}
-
-export async function moveSubcategory(
-  fromCategoryId: string,
-  subId: string,
-  toCategoryId: string,
-  orderedIds: string[]
-): Promise<{ id: string; category_id: string; name: string }> {
-  return request<{ id: string; category_id: string; name: string }>(
-    `/categories/${encodeURIComponent(fromCategoryId)}/subcategories/${encodeURIComponent(subId)}/move`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category_id: toCategoryId, ordered_ids: orderedIds }),
-    }
-  );
-}
-
 export async function uploadReceipt(
   file: File,
   category: string,
   notes?: string,
-  subcategory?: string
+  owner?: string
 ): Promise<UploadResponse> {
   const form = new FormData();
   form.append("file", file);
   form.append("category", category);
-  if (subcategory) form.append("subcategory", subcategory);
+  if (owner) form.append("owner", owner);
   if (notes) form.append("notes", notes);
   return request<UploadResponse>("/upload", {
     method: "POST",
@@ -204,13 +127,13 @@ export function uploadReceiptWithProgress(
   category: string,
   onProgress: (pct: number) => void,
   notes?: string,
-  subcategory?: string
+  owner?: string
 ): Promise<UploadResponse> {
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append("file", file);
     form.append("category", category);
-    if (subcategory) form.append("subcategory", subcategory);
+    if (owner) form.append("owner", owner);
     if (notes) form.append("notes", notes);
 
     const xhr = new XMLHttpRequest();

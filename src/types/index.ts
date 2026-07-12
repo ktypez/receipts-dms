@@ -2,7 +2,7 @@ export interface Receipt {
   id: string;
   filename: string;
   category: string;
-  subcategory?: string;
+  owner?: string;
   content_type: string;
   size: number;
   uploaded_at: string;
@@ -15,17 +15,11 @@ export interface Category {
   created_at: string;
 }
 
-export interface Subcategory {
-  id: string;
-  category_id: string;
-  name: string;
-  created_at: string;
-}
-
 export interface UploadResponse {
   id: string;
   filename: string;
   category: string;
+  owner?: string;
   uploaded_at: string;
   notes?: string;
 }

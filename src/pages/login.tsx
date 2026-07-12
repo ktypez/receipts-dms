@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router";
-import { Receipt, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { FileText, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -35,9 +35,9 @@ export function Login() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background">
-            <Receipt className="h-6 w-6 text-foreground" />
+            <FileText className="h-6 w-6 text-foreground" />
           </div>
-          <CardTitle className="text-xl">Receipts DMS</CardTitle>
+          <CardTitle className="text-xl">Paper</CardTitle>
           <CardDescription>Enter password to continue</CardDescription>
         </CardHeader>
         <CardContent>

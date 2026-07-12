@@ -1,18 +1,17 @@
 import { NavLink } from "react-router";
 import {
   LayoutDashboard,
-  Receipt,
+  FileText,
   Upload,
   Tags,
   Settings,
-  ReceiptText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/receipts", label: "Receipts", icon: ReceiptText },
+  { to: "/receipts", label: "Documents", icon: FileText },
   { to: "/upload", label: "Upload", icon: Upload },
   { to: "/categories", label: "Categories", icon: Tags },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -32,8 +31,8 @@ export function Sidebar({ open }: SidebarProps) {
     >
       <div className="flex h-14 items-center gap-2 border-b border-border px-4">
         <span className="flex items-center gap-2 font-semibold tracking-tight text-foreground">
-          <Receipt className="h-5 w-5" />
-          Receipts DMS
+          <FileText className="h-5 w-5" />
+          Paper
         </span>
       </div>
 

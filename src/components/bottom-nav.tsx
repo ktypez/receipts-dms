@@ -1,7 +1,7 @@
 import { NavLink } from "react-router";
 import {
   LayoutDashboard,
-  ReceiptText,
+  FileText,
   Upload,
   Tags,
   Settings,
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "หน้าแรก", icon: LayoutDashboard },
-  { to: "/receipts", label: "เอกสาร", icon: ReceiptText },
+  { to: "/receipts", label: "เอกสาร", icon: FileText },
   { to: "/upload", label: "อัปโหลด", icon: Upload },
   { to: "/categories", label: "หมวดหมู่", icon: Tags },
   { to: "/settings", label: "ตั้งค่า", icon: Settings },

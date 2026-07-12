@@ -1,12 +1,5 @@
-import { useState, useEffect } from "react";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  AlertCircle,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { useState } from "react";
+import { Plus, Pencil, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,20 +21,13 @@ import { toast } from "sonner";
 export function Categories() {
   const {
     categories,
-    subcategories,
     loading,
     error,
     reload,
-    loadSubcategories,
     create,
     update,
     remove,
-    createSub,
-    updateSub,
-    removeSub,
     reorderCats,
-    reorderSubs,
-    moveSub,
   } = useCategories();
   const { receipts } = useReceipts();
   const [newName, setNewName] = useState("");
@@ -51,42 +37,13 @@ export function Categories() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [subName, setSubName] = useState<Record<string, string>>({});
-  const [addingSub, setAddingSub] = useState<string | null>(null);
-  const [editSub, setEditSub] = useState<{ cat: string; id: string } | null>(
-    null
-  );
-  const [editSubName, setEditSubName] = useState("");
-
   const [dragCat, setDragCat] = useState<string | null>(null);
-  const [dragSub, setDragSub] = useState<{ cat: string; id: string } | null>(
-    null
-  );
   const [catDropTarget, setCatDropTarget] = useState<string | null>(null);
-  const [subDropTarget, setSubDropTarget] = useState<string | null>(null);
-  const [movePending, setMovePending] = useState(false);
 
   const receiptCounts = receipts.reduce<Record<string, number>>((acc, r) => {
     acc[r.category] = (acc[r.category] || 0) + 1;
     return acc;
   }, {});
-
-  const subCounts = receipts.reduce<Record<string, number>>((acc, r) => {
-    if (r.subcategory) {
-      const key = `${r.category}::${r.subcategory}`;
-      acc[key] = (acc[key] || 0) + 1;
-    }
-    return acc;
-  }, {});
-
-  const toggleExpand = async (id: string) => {
-    const next = !expanded[id];
-    setExpanded((prev) => ({ ...prev, [id]: next }));
-    if (next && !subcategories[id]) {
-      await loadSubcategories(id);
-    }
-  };
 
   const handleAdd = async () => {
     const name = newName.trim();
@@ -129,46 +86,6 @@ export function Categories() {
     }
   };
 
-  const handleAddSub = async (categoryId: string) => {
-    const name = (subName[categoryId] || "").trim();
-    if (!name) return;
-    try {
-      await createSub(categoryId, name);
-      setSubName((prev) => ({ ...prev, [categoryId]: "" }));
-      setAddingSub(null);
-      toast.success("Sub-category created");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create");
-    }
-  };
-
-  const handleEditSub = async (categoryId: string, subId: string) => {
-    const name = editSubName.trim();
-    if (!name) return;
-    try {
-      await updateSub(categoryId, subId, name);
-      setEditSub(null);
-      toast.success("Sub-category updated");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to update");
-    }
-  };
-
-  const handleDeleteSub = async (categoryId: string, subId: string) => {
-    try {
-      await removeSub(categoryId, subId);
-      toast.success("Sub-category deleted");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to delete");
-    }
-  };
-
-  const computeSubOrderedIds = (categoryId: string, excludeId?: string) => {
-    return (subcategories[categoryId] || [])
-      .map((s) => s.id)
-      .filter((id) => id !== excludeId);
-  };
-
   const handleCatDragStart = (id: string) => (e: React.DragEvent) => {
     setDragCat(id);
     e.dataTransfer.effectAllowed = "move";
@@ -194,79 +111,6 @@ export function Categories() {
     }
   };
 
-  const handleSubDragStart =
-    (categoryId: string, subId: string) => (e: React.DragEvent) => {
-      setDragSub({ cat: categoryId, id: subId });
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", `sub:${categoryId}:${subId}`);
-    };
-
-  const handleSubDropOnSub = async (
-    targetCat: string,
-    targetSubId: string
-  ) => {
-    if (!dragSub) {
-      setDragSub(null);
-      setSubDropTarget(null);
-      return;
-    }
-    const { cat: fromCat, id: subId } = dragSub;
-    setDragSub(null);
-    setSubDropTarget(null);
-
-    if (fromCat === targetCat) {
-      if (subId === targetSubId) return;
-      const ordered = computeSubOrderedIds(targetCat);
-      const idx = ordered.indexOf(targetSubId);
-      ordered.splice(idx, 0, subId);
-      try {
-        await reorderSubs(targetCat, ordered);
-        toast.success("Sub-categories reordered");
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed to reorder");
-      }
-    } else {
-      const targetOrdered = computeSubOrderedIds(targetCat);
-      const idx = targetOrdered.indexOf(targetSubId);
-      targetOrdered.splice(idx, 0, subId);
-      setMovePending(true);
-      try {
-        await moveSub(fromCat, subId, targetCat, targetOrdered);
-        toast.success("Sub-category moved");
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed to move");
-      } finally {
-        setMovePending(false);
-      }
-    }
-  };
-
-  const handleSubDropOnCategory = async (targetCat: string) => {
-    if (!dragSub) {
-      setDragSub(null);
-      setCatDropTarget(null);
-      return;
-    }
-    const { cat: fromCat, id: subId } = dragSub;
-    setDragSub(null);
-    setCatDropTarget(null);
-    if (fromCat === targetCat) return;
-
-    const targetOrdered = [
-      ...computeSubOrderedIds(targetCat),
-      subId,
-    ];
-    setMovePending(true);
-    try {
-      await moveSub(fromCat, subId, targetCat, targetOrdered);
-      toast.success("Sub-category moved");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to move");
-    } finally {
-      setMovePending(false);
-    }
-  };
-
   if (error) {
     return (
       <div className="flex flex-col items-center gap-4 py-20">
@@ -287,7 +131,7 @@ export function Categories() {
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-xs text-muted-foreground">
-            คลุมแล้วลากเพื่อเรียงลำดับหมวดหมู่ และลากหมวดหมู่ย่อยไปหมวดหมู่อื่นได้
+            คลุมแล้วลากเพื่อเรียงลำดับหมวดหมู่
           </p>
           <div className="mb-6 flex gap-3">
             <Input
@@ -333,24 +177,10 @@ export function Categories() {
                   className={`rounded-lg border border-border bg-card ${
                     dragCat === c.id ? "opacity-50" : ""
                   } ${
-                    catDropTarget === c.id && dragCat
-                      ? "ring-2 ring-ring"
-                      : ""
+                    catDropTarget === c.id && dragCat ? "ring-2 ring-ring" : ""
                   }`}
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => toggleExpand(c.id)}
-                      className="shrink-0 text-muted-foreground hover:text-foreground"
-                      aria-label="Toggle sub-categories"
-                    >
-                      {expanded[c.id] ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
                     <div className="flex-1 min-w-0">
                       <p className="truncate font-medium">{c.name}</p>
                     </div>
@@ -370,9 +200,7 @@ export function Categories() {
                       </Button>
                       <Dialog
                         open={deleteId === c.id}
-                        onOpenChange={(open) =>
-                          setDeleteId(open ? c.id : null)
-                        }
+                        onOpenChange={(open) => setDeleteId(open ? c.id : null)}
                       >
                         <DialogTrigger asChild>
                           <Button
@@ -390,14 +218,14 @@ export function Categories() {
                               {(receiptCounts[c.name] || 0) > 0 ? (
                                 <span className="text-destructive">
                                   Cannot delete "{c.name}" —{" "}
-                                  {receiptCounts[c.name]} receipt(s) are
-                                  using this category. Reassign them first.
+                                  {receiptCounts[c.name]} document(s) are using
+                                  this category. Reassign them first.
                                 </span>
                               ) : (
                                 <span>
                                   Are you sure you want to delete{" "}
-                                  <strong>{c.name}</strong>? This action
-                                  cannot be undone.
+                                  <strong>{c.name}</strong>? This action cannot
+                                  be undone.
                                 </span>
                               )}
                             </DialogDescription>
@@ -445,175 +273,6 @@ export function Categories() {
                           ยกเลิก
                         </Button>
                       </div>
-                    </div>
-                  )}
-
-                  {expanded[c.id] && (
-                    <div
-                      className={`border-t border-border px-4 py-3 pl-11 space-y-2 ${
-                        catDropTarget === c.id && dragSub
-                          ? "ring-2 ring-inset ring-ring rounded-md"
-                          : ""
-                      }`}
-                      onDragOver={(e) => {
-                        if (!dragSub) return;
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = "move";
-                        setCatDropTarget(c.id);
-                      }}
-                      onDragLeave={() => {
-                        if (catDropTarget === c.id) setCatDropTarget(null);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        handleSubDropOnCategory(c.id);
-                      }}
-                    >
-                      {(subcategories[c.id] || []).length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-1">
-                          ยังไม่มีหมวดหมู่ย่อย
-                        </p>
-                      ) : (
-                        (subcategories[c.id] || []).map((s) => (
-                          <div
-                            key={s.id}
-                            draggable={
-                              !(editSub && editSub.id === s.id) && !movePending
-                            }
-                            onDragStart={handleSubDragStart(c.id, s.id)}
-                            onDragOver={(e) => {
-                              if (!dragSub) return;
-                              e.preventDefault();
-                              e.dataTransfer.dropEffect = "move";
-                              setSubDropTarget(s.id);
-                            }}
-                            onDragLeave={() => {
-                              if (subDropTarget === s.id) setSubDropTarget(null);
-                            }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              handleSubDropOnSub(c.id, s.id);
-                            }}
-                            className={`flex items-center gap-2 rounded-md border border-border/60 bg-background px-3 py-2 ${
-                              dragSub?.id === s.id ? "opacity-50" : ""
-                            } ${
-                              subDropTarget === s.id && dragSub
-                                ? "ring-2 ring-ring"
-                                : ""
-                            }`}
-                          >
-                            {editSub?.id === s.id ? (
-                              <div className="flex flex-1 gap-2">
-                                <Input
-                                  value={editSubName}
-                                  onChange={(e) =>
-                                    setEditSubName(e.target.value)
-                                  }
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter")
-                                      handleEditSub(c.id, s.id);
-                                    if (e.key === "Escape") setEditSub(null);
-                                  }}
-                                  autoFocus
-                                  className="flex-1 h-8"
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleEditSub(c.id, s.id)}
-                                >
-                                  บันทึก
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setEditSub(null)}
-                                >
-                                  ยกเลิก
-                                </Button>
-                              </div>
-                            ) : (
-                              <>
-                                <span className="flex-1 truncate text-sm">
-                                  {s.name}
-                                </span>
-                                <Badge
-                                  variant="outline"
-                                  className="shrink-0 text-muted-foreground"
-                                >
-                                  {subCounts[`${c.name}::${s.name}`] || 0}
-                                </Badge>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => {
-                                    setEditSub({ cat: c.id, id: s.id });
-                                    setEditSubName(s.name);
-                                  }}
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                  onClick={() => handleDeleteSub(c.id, s.id)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        ))
-                      )}
-
-                      {addingSub === c.id ? (
-                        <div className="flex gap-2 pt-1">
-                          <Input
-                            value={subName[c.id] || ""}
-                            onChange={(e) =>
-                              setSubName((prev) => ({
-                                ...prev,
-                                [c.id]: e.target.value,
-                              }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleAddSub(c.id);
-                              if (e.key === "Escape") setAddingSub(null);
-                            }}
-                            placeholder="ชื่อหมวดหมู่ย่อย"
-                            autoFocus
-                            className="flex-1 h-8"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleAddSub(c.id)}
-                            disabled={!(subName[c.id] || "").trim()}
-                          >
-                            เพิ่ม
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setAddingSub(null)}
-                          >
-                            ยกเลิก
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground"
-                          onClick={() => {
-                            setAddingSub(c.id);
-                            if (!subcategories[c.id])
-                              loadSubcategories(c.id);
-                          }}
-                        >
-                          <Plus className="mr-1 h-3.5 w-3.5" /> เพิ่มหมวดหมู่ย่อย
-                        </Button>
-                      )}
                     </div>
                   )}
                 </div>

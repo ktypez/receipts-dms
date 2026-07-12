@@ -63,12 +63,12 @@ async function compressImage(file: File): Promise<File> {
 
 export function Upload() {
   const navigate = useNavigate();
-  const { categories, subcategories, loadSubcategories } = useCategories();
+  const { categories } = useCategories();
   const [file, setFile] = useState<File | null>(null);
   const [originalSize, setOriginalSize] = useState(0);
   const [compressing, setCompressing] = useState(false);
   const [category, setCategory] = useState("");
-  const [subcategory, setSubcategory] = useState("");
+  const [owner, setOwner] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -157,7 +157,7 @@ export function Upload() {
         category,
         setUploadProgress,
         notes,
-        subcategory || undefined
+        owner.trim() || undefined
       );
       toast.success("Upload successful");
       navigate(`/receipts/${result.id}`);
@@ -170,19 +170,16 @@ export function Upload() {
 
   const onCategoryChange = async (value: string) => {
     setCategory(value);
-    setSubcategory("");
-    const cat = categories.find((c) => c.name === value);
-    if (cat) await loadSubcategories(cat.id);
   };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Upload Receipt</CardTitle>
+          <CardTitle>Upload Document</CardTitle>
           <CardDescription>
-            Drop a receipt file or click to select. Supported: JPEG, PNG, WebP,
-            PDF. Images are compressed to WebP for smaller storage.
+            Drop a file or click to select. Supported: JPEG, PNG, WebP, PDF.
+            Images are compressed to WebP for smaller storage.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -201,7 +198,7 @@ export function Upload() {
               <UploadIcon className="h-10 w-10 text-muted-foreground/50" />
               <div className="text-center">
                 <p className="text-sm font-medium">
-                  Drop your receipt here, or click to browse
+                  Drop your document here, or click to browse
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   JPEG, PNG, WebP, PDF (images compressed to WebP)
@@ -304,27 +301,16 @@ export function Upload() {
                 </Select>
               </div>
 
-              {category && (subcategories[categories.find((c) => c.name === category)?.id || ""] || []).length > 0 && (
-                <div className="space-y-2">
-                  <Label htmlFor="subcategory">Sub-category (optional)</Label>
-                  <Select
-                    value={subcategory}
-                    onValueChange={setSubcategory}
-                    disabled={uploading}
-                  >
-                    <SelectTrigger id="subcategory">
-                      <SelectValue placeholder="Select sub-category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(subcategories[categories.find((c) => c.name === category)?.id || ""] || []).map((s) => (
-                        <SelectItem key={s.id} value={s.name}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="owner">Owner / Folder (optional)</Label>
+                <Input
+                  id="owner"
+                  value={owner}
+                  onChange={(e) => setOwner(e.target.value)}
+                  placeholder="ใครเป็นเจ้าของเอกสารนี้"
+                  disabled={uploading}
+                />
+              </div>
 
               {uploading && (
                 <div className="space-y-2">
@@ -345,7 +331,7 @@ export function Upload() {
                   <>{uploadProgress}% — Uploading...</>
                 ) : (
                   <>
-                    <UploadIcon className="mr-1 h-4 w-4" /> Upload Receipt
+                    <UploadIcon className="mr-1 h-4 w-4" /> Upload Document
                   </>
                 )}
               </Button>
