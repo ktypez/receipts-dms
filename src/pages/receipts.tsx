@@ -44,22 +44,39 @@ export function Receipts() {
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState("");
   const [page, setPage] = useState(1);
-  const [view, setView] = useState<"table" | "card">("table");
+  const [view, setView] = useState<"table" | "card">("card");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const owners = useMemo(() => {
+    const set = new Set<string>();
+    receipts.forEach((r) => {
+      if (r.owner) set.add(r.owner);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [receipts]);
 
   const filtered = useMemo(() => {
     let items = receipts;
     if (categoryFilter && categoryFilter !== "all") {
       items = items.filter((r) => r.category === categoryFilter);
     }
+    if (ownerFilter && ownerFilter !== "all") {
+      items = items.filter((r) => r.owner === ownerFilter);
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      items = items.filter((r) => r.filename.toLowerCase().includes(q) || (r.notes && r.notes.toLowerCase().includes(q)));
+      items = items.filter(
+        (r) =>
+          r.filename.toLowerCase().includes(q) ||
+          (r.notes && r.notes.toLowerCase().includes(q)) ||
+          (r.owner && r.owner.toLowerCase().includes(q))
+      );
     }
     return items;
-  }, [receipts, categoryFilter, search]);
+  }, [receipts, categoryFilter, ownerFilter, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -85,6 +102,11 @@ export function Receipts() {
 
   const handleCategoryChange = (value: string) => {
     setCategoryFilter(value);
+    setPage(1);
+  };
+
+  const handleOwnerChange = (value: string) => {
+    setOwnerFilter(value);
     setPage(1);
   };
 
@@ -131,6 +153,19 @@ export function Receipts() {
                 {categories.map((c) => (
                   <SelectItem key={c.id} value={c.name}>
                     {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={ownerFilter} onValueChange={handleOwnerChange}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="All owners" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All owners</SelectItem>
+                {owners.map((o) => (
+                  <SelectItem key={o} value={o}>
+                    {o}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -273,7 +308,7 @@ export function Receipts() {
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
-                                <DialogTitle>Delete receipt</DialogTitle>
+                                <DialogTitle>Delete document</DialogTitle>
                                 <DialogDescription>
                                   Are you sure you want to delete{" "}
                                   <strong>{r.filename}</strong>? This action
