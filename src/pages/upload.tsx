@@ -63,11 +63,12 @@ async function compressImage(file: File): Promise<File> {
 
 export function Upload() {
   const navigate = useNavigate();
-  const { categories, loading: catsLoading } = useCategories();
+  const { categories, subcategories, loadSubcategories } = useCategories();
   const [file, setFile] = useState<File | null>(null);
   const [originalSize, setOriginalSize] = useState(0);
   const [compressing, setCompressing] = useState(false);
   const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -155,7 +156,8 @@ export function Upload() {
         file,
         category,
         setUploadProgress,
-        notes
+        notes,
+        subcategory || undefined
       );
       toast.success("Upload successful");
       navigate(`/receipts/${result.id}`);
@@ -164,6 +166,13 @@ export function Upload() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const onCategoryChange = async (value: string) => {
+    setCategory(value);
+    setSubcategory("");
+    const cat = categories.find((c) => c.name === value);
+    if (cat) await loadSubcategories(cat.id);
   };
 
   return (
@@ -277,29 +286,45 @@ export function Upload() {
 
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                {catsLoading ? (
-                  <div className="text-sm text-muted-foreground">
-                    Loading categories...
-                  </div>
-                ) : (
+                <Select
+                  value={category}
+                  onValueChange={onCategoryChange}
+                  disabled={uploading}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.name}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {category && (subcategories[categories.find((c) => c.name === category)?.id || ""] || []).length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="subcategory">Sub-category (optional)</Label>
                   <Select
-                    value={category}
-                    onValueChange={setCategory}
+                    value={subcategory}
+                    onValueChange={setSubcategory}
                     disabled={uploading}
                   >
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
+                    <SelectTrigger id="subcategory">
+                      <SelectValue placeholder="Select sub-category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.name}>
-                          {c.name}
+                      {(subcategories[categories.find((c) => c.name === category)?.id || ""] || []).map((s) => (
+                        <SelectItem key={s.id} value={s.name}>
+                          {s.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-              </div>
+                </div>
+              )}
 
               {uploading && (
                 <div className="space-y-2">

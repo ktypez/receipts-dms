@@ -20,6 +20,7 @@ export async function onRequestPost(context) {
   const formData = await context.request.formData();
   const file = formData.get("file");
   const category = formData.get("category");
+  const subcategory = formData.get("subcategory") || null;
   const notes = formData.get("notes") || null;
 
   if (!file || !category) {
@@ -60,13 +61,13 @@ export async function onRequestPost(context) {
 
   const now = new Date().toISOString();
   await DB.prepare(
-    "INSERT INTO receipts (id, filename, category, content_type, size, uploaded_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO receipts (id, filename, category, subcategory, content_type, size, uploaded_at, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   )
-    .bind(id, file.name, catRow.name, file.type, file.size, now, notes)
+    .bind(id, file.name, catRow.name, subcategory, file.type, file.size, now, notes)
     .run();
 
   return new Response(
-    JSON.stringify({ id, filename: file.name, category: catRow.name, uploaded_at: now, notes }),
+    JSON.stringify({ id, filename: file.name, category: catRow.name, subcategory, uploaded_at: now, notes }),
     { status: 201, headers: { "Content-Type": "application/json" } }
   );
 }

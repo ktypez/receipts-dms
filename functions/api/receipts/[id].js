@@ -5,7 +5,7 @@ export async function onRequestPut(context) {
   if (!id) return new Response(JSON.stringify({ error: "Missing id" }), { status: 400 });
 
   const body = await context.request.json();
-  const { filename, category, notes } = body;
+  const { filename, category, subcategory, notes } = body;
 
   if (filename !== undefined) {
     if (typeof filename !== "string" || !filename.trim()) {
@@ -27,6 +27,11 @@ export async function onRequestPut(context) {
 
   if (notes !== undefined) {
     await DB.prepare("UPDATE receipts SET notes = ? WHERE id = ?").bind(notes, id).run();
+  }
+
+  if (subcategory !== undefined) {
+    const value = subcategory === null ? null : String(subcategory).trim();
+    await DB.prepare("UPDATE receipts SET subcategory = ? WHERE id = ?").bind(value, id).run();
   }
 
   return new Response(JSON.stringify({ id }), {

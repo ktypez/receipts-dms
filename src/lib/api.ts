@@ -1,4 +1,4 @@
-import type { Receipt, Category, UploadResponse, ApiError } from "@/types";
+import type { Receipt, Category, Subcategory, UploadResponse, ApiError } from "@/types";
 
 const BASE = "/api";
 
@@ -46,7 +46,7 @@ export async function renameReceipt(
 
 export async function updateReceipt(
   id: string,
-  data: { filename?: string; category?: string; notes?: string }
+  data: { filename?: string; category?: string; subcategory?: string; notes?: string }
 ): Promise<Receipt> {
   return request<Receipt>(`/receipts/${encodeURIComponent(id)}`, {
     method: "PUT",
@@ -95,14 +95,63 @@ export async function deleteCategory(id: string): Promise<void> {
   });
 }
 
+export async function getSubcategories(
+  categoryId: string
+): Promise<Subcategory[]> {
+  return request<Subcategory[]>(
+    `/categories/${encodeURIComponent(categoryId)}/subcategories`
+  );
+}
+
+export async function createSubcategory(
+  categoryId: string,
+  name: string
+): Promise<Subcategory> {
+  return request<Subcategory>(
+    `/categories/${encodeURIComponent(categoryId)}/subcategories`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }
+  );
+}
+
+export async function updateSubcategory(
+  categoryId: string,
+  subId: string,
+  name: string
+): Promise<{ id: string; name: string }> {
+  return request<{ id: string; name: string }>(
+    `/categories/${encodeURIComponent(categoryId)}/subcategories/${encodeURIComponent(subId)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }
+  );
+}
+
+export async function deleteSubcategory(
+  categoryId: string,
+  subId: string
+): Promise<void> {
+  await request(
+    `/categories/${encodeURIComponent(categoryId)}/subcategories/${encodeURIComponent(subId)}`,
+    { method: "DELETE" }
+  );
+}
+
 export async function uploadReceipt(
   file: File,
   category: string,
-  notes?: string
+  notes?: string,
+  subcategory?: string
 ): Promise<UploadResponse> {
   const form = new FormData();
   form.append("file", file);
   form.append("category", category);
+  if (subcategory) form.append("subcategory", subcategory);
   if (notes) form.append("notes", notes);
   return request<UploadResponse>("/upload", {
     method: "POST",
@@ -114,12 +163,14 @@ export function uploadReceiptWithProgress(
   file: File,
   category: string,
   onProgress: (pct: number) => void,
-  notes?: string
+  notes?: string,
+  subcategory?: string
 ): Promise<UploadResponse> {
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append("file", file);
     form.append("category", category);
+    if (subcategory) form.append("subcategory", subcategory);
     if (notes) form.append("notes", notes);
 
     const xhr = new XMLHttpRequest();

@@ -48,6 +48,7 @@ export function ReceiptDetail() {
   const [editMode, setEditMode] = useState(false);
   const [editFilename, setEditFilename] = useState("");
   const [editCategory, setEditCategory] = useState("");
+  const [editSubcategory, setEditSubcategory] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -64,6 +65,7 @@ export function ReceiptDetail() {
     if (!receipt) return;
     setEditFilename(stripExtension(receipt.filename));
     setEditCategory(receipt.category);
+    setEditSubcategory(receipt.subcategory || "");
     setEditNotes(receipt.notes || "");
     setEditMode(true);
   };
@@ -81,6 +83,7 @@ export function ReceiptDetail() {
       await updateReceipt(id, {
         filename: name,
         category: editCategory,
+        subcategory: editSubcategory || null,
         notes: editNotes,
       });
       setEditMode(false);
@@ -225,6 +228,28 @@ export function ReceiptDetail() {
                 <Badge variant="secondary" className="mt-1">
                   {receipt.category}
                 </Badge>
+              )}
+            </div>
+
+            <Separator />
+
+            <div>
+              <p className="text-xs text-muted-foreground">Sub-category</p>
+              {editMode ? (
+                <Input
+                  value={editSubcategory}
+                  onChange={(e) => setEditSubcategory(e.target.value)}
+                  placeholder="(optional)"
+                  className="mt-1"
+                />
+              ) : receipt.subcategory ? (
+                <Badge variant="outline" className="mt-1">
+                  {receipt.subcategory}
+                </Badge>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground italic">
+                  None
+                </p>
               )}
             </div>
 

@@ -2,6 +2,7 @@ export interface Receipt {
   id: string;
   filename: string;
   category: string;
+  subcategory?: string;
   content_type: string;
   size: number;
   uploaded_at: string;
@@ -10,6 +11,13 @@ export interface Receipt {
 
 export interface Category {
   id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface Subcategory {
+  id: string;
+  category_id: string;
   name: string;
   created_at: string;
 }
