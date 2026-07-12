@@ -48,6 +48,12 @@ export default {
         lg: "var(--radius)",
         xl: "calc(var(--radius) + 4px)",
       },
+      spacing: {
+        "safe-bottom": "env(safe-area-inset-bottom)",
+        "safe-top": "env(safe-area-inset-top)",
+        "safe-left": "env(safe-area-inset-left)",
+        "safe-right": "env(safe-area-inset-right)",
+      },
     },
   },
   plugins: [],

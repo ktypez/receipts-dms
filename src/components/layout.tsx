@@ -19,7 +19,7 @@ export function Layout() {
         className={cn(
           "transition-all duration-300",
           !isMobile && sidebarOpen && "ml-56",
-          isMobile && "pb-16"
+          isMobile && "pb-20"  // Space for bottom nav
         )}
       >
         <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
