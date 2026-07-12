@@ -13,7 +13,7 @@ export default defineConfig({
     outDir: "./public",
     emptyOutDir: true,
   },
-  publicDir: false,
+  publicDir: "static",
   server: {
     proxy: {
       "/api": {
