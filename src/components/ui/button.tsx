@@ -9,23 +9,23 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#1c1c1c] text-[#fcfbf8] shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.1)] hover:opacity-90 active:opacity-80",
+          "bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-primary/90 active:bg-primary active:shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.15),inset_0_-1px_0_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.1)] hover:opacity-90",
+          "bg-destructive text-destructive-foreground shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-destructive/90",
         outline:
-          "border border-[rgba(28,28,28,0.4)] bg-transparent text-foreground hover:bg-[rgba(28,28,28,0.04)]",
+          "border border-border bg-transparent text-foreground hover:bg-accent",
         secondary:
-          "bg-background text-foreground hover:bg-[rgba(28,28,28,0.04)]",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "text-muted-foreground hover:text-foreground hover:bg-[rgba(28,28,28,0.04)]",
+          "text-foreground hover:bg-accent",
         link:
-          "text-foreground underline-offset-4 hover:underline",
+          "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9 rounded-full",
+        icon: "h-9 w-9 rounded-md",
       },
     },
     defaultVariants: {
