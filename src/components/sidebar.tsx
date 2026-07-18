@@ -7,7 +7,7 @@ import {
   Tags,
   Settings,
 } from "lucide-react";
-import { cn, staggerContainer, fadeUpItem } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -38,32 +38,26 @@ export function Sidebar({ open }: SidebarProps) {
         </span>
       </div>
 
-      <motion.nav
-        className="flex-1 space-y-1 p-2"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-      >
+      <nav className="flex-1 space-y-1 p-2">
         {navItems.map((item) => (
-          <motion.div key={item.to} variants={fadeUpItem}>
-            <NavLink
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )
-              }
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span>{item.label}</span>
-            </NavLink>
-          </motion.div>
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )
+            }
+          >
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span>{item.label}</span>
+          </NavLink>
         ))}
-      </motion.nav>
+      </nav>
     </motion.aside>
   );
 }

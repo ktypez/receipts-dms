@@ -271,11 +271,8 @@ export function Receipts() {
                   className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
                 >
                   {paged.map((r) => (
-                    <motion.div
+                    <div
                       key={r.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2 }}
                       className="group relative overflow-hidden rounded-lg border border-border bg-card"
                     >
                       <Link to={`/receipts/${r.id}`}>
@@ -353,7 +350,7 @@ export function Receipts() {
                           </Dialog>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </motion.div>
               )}

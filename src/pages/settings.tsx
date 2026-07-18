@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Sun, Moon, FileText, HardDrive, LogOut } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/lib/auth-context";
 import { useReceipts } from "@/hooks/use-receipts";
-import { formatSize, staggerContainer, fadeUpItem } from "@/lib/utils";
+import { formatSize } from "@/lib/utils";
 
 export function Settings() {
   const { theme, toggle } = useTheme();
@@ -15,13 +14,7 @@ export function Settings() {
   const totalStorage = receipts.reduce((sum, r) => sum + r.size, 0);
 
   return (
-    <motion.div
-      className="mx-auto max-w-2xl space-y-6"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="show"
-    >
-      <motion.div variants={fadeUpItem}>
+    <div className="mx-auto max-w-2xl space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Preferences</CardTitle>
@@ -53,9 +46,7 @@ export function Settings() {
           </div>
         </CardContent>
       </Card>
-      </motion.div>
 
-      <motion.div variants={fadeUpItem}>
       <Card>
         <CardHeader>
           <CardTitle>Storage</CardTitle>
@@ -80,9 +71,7 @@ export function Settings() {
           </div>
         </CardContent>
       </Card>
-      </motion.div>
 
-      <motion.div variants={fadeUpItem}>
       <Card>
         <CardHeader>
           <CardTitle>About</CardTitle>
@@ -99,13 +88,12 @@ export function Settings() {
           </p>
         </CardContent>
       </Card>
-      </motion.div>
 
-      <motion.div variants={fadeUpItem} className="flex justify-center">
+      <div className="flex justify-center">
         <Button variant="outline" className="gap-2 text-destructive" onClick={logout}>
           <LogOut className="h-4 w-4" /> Sign out
         </Button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

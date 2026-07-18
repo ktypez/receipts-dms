@@ -31,15 +31,6 @@ export function Login() {
     }
   };
 
-  const formVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-  };
-  const formItem = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <motion.div
@@ -62,14 +53,8 @@ export function Login() {
           <CardDescription>Enter password to continue</CardDescription>
         </CardHeader>
         <CardContent>
-          <motion.form
-            onSubmit={handleSubmit}
-            variants={formVariants}
-            initial="hidden"
-            animate="show"
-            className="space-y-4"
-          >
-            <motion.div variants={formItem} className="relative">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
               <Input
                 type={show ? "text" : "password"}
                 placeholder="Password"
@@ -89,25 +74,19 @@ export function Login() {
               >
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
-            </motion.div>
+            </div>
 
             {error && (
-              <motion.div
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-              >
+              <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {error}
-              </motion.div>
+              </div>
             )}
 
-            <motion.div variants={formItem}>
-              <Button type="submit" className="w-full" disabled={!password.trim() || busy}>
-                {busy ? "Signing in..." : "Sign in"}
-              </Button>
-            </motion.div>
-          </motion.form>
+            <Button type="submit" className="w-full" disabled={!password.trim() || busy}>
+              {busy ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </motion.div>

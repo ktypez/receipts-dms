@@ -18,7 +18,6 @@ import { useCategories } from "@/hooks/use-categories";
 import { useReceipts } from "@/hooks/use-receipts";
 
 import { toast } from "sonner";
-import { staggerContainer, fadeUpItem } from "@/lib/utils";
 
 export function Categories() {
   const {
@@ -158,17 +157,10 @@ export function Categories() {
               No categories yet. Add one above.
             </div>
           ) : (
-            <motion.div
-              className="space-y-2"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-            >
+            <div className="space-y-2">
               {categories.map((c) => (
                 <motion.div
                   key={c.id}
-                  layout
-                  variants={fadeUpItem}
                   draggable
                   onDragStart={handleCatDragStart(c.id)}
                   onDragOver={(e) => {
@@ -298,7 +290,7 @@ export function Categories() {
                   </AnimatePresence>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
           )}
         </CardContent>
       </Card>

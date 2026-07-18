@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { useReceipts } from "@/hooks/use-receipts";
 import { useCategories } from "@/hooks/use-categories";
-import { formatDate, formatSize, stripExtension, staggerContainer, fadeUpItem } from "@/lib/utils";
+import { formatDate, formatSize, stripExtension } from "@/lib/utils";
 import { getFileUrl, updateReceipt } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -146,14 +146,8 @@ export function ReceiptDetail() {
         </h2>
       </div>
 
-      <motion.div
-        className="grid gap-4 lg:grid-cols-3"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-      >
-        <motion.div variants={fadeUpItem} className="lg:col-span-2">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Preview</CardTitle>
           </CardHeader>
@@ -192,9 +186,7 @@ export function ReceiptDetail() {
             </div>
           </CardContent>
         </Card>
-        </motion.div>
 
-        <motion.div variants={fadeUpItem}>
         <Card>
           <CardHeader>
             <CardTitle>Details</CardTitle>
@@ -370,8 +362,7 @@ export function ReceiptDetail() {
             </div>
           </CardContent>
         </Card>
-        </motion.div>
-      </motion.div>
+      </div>
 
       <AnimatePresence>
         {lightbox && isImage && (

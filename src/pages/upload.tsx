@@ -28,7 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { useCategories } from "@/hooks/use-categories";
 import { uploadReceiptWithProgress } from "@/lib/api";
 import { toast } from "sonner";
-import { formatSize, staggerContainer, fadeUpItem } from "@/lib/utils";
+import { formatSize } from "@/lib/utils";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -239,12 +239,12 @@ export function Upload() {
             </motion.div>
           ) : (
             <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              <motion.div variants={fadeUpItem} className="flex items-center gap-4 rounded-lg border p-4">
+              <div className="flex items-center gap-4 rounded-lg border p-4">
                 {previewUrl ? (
                   <img
                     src={previewUrl}
@@ -279,20 +279,16 @@ export function Upload() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </motion.div>
+              </div>
 
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                >
+                <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                   <AlertCircle className="h-4 w-4" />
                   {error}
-                </motion.div>
+                </div>
               )}
 
-              <motion.div variants={fadeUpItem} className="space-y-2">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="notes">Notes</Label>
                   <span className="text-xs text-muted-foreground">(optional)</span>
@@ -306,9 +302,9 @@ export function Upload() {
                   disabled={uploading}
                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
-              </motion.div>
+              </div>
 
-              <motion.div variants={fadeUpItem} className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Select
                   value={category}
@@ -326,9 +322,9 @@ export function Upload() {
                     ))}
                   </SelectContent>
                 </Select>
-              </motion.div>
+              </div>
 
-              <motion.div variants={fadeUpItem} className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="owner">Owner / Folder (optional)</Label>
                 <Input
                   id="owner"
@@ -337,7 +333,7 @@ export function Upload() {
                   placeholder="ใครเป็นเจ้าของเอกสารนี้"
                   disabled={uploading}
                 />
-              </motion.div>
+              </div>
 
               <AnimatePresence>
                 {uploading && (
