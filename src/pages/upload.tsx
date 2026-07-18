@@ -1,5 +1,6 @@
-import { useState, useRef, type DragEvent } from "react";
+import { useState, useRef, useEffect, type DragEvent } from "react";
 import { useNavigate } from "react-router";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload as UploadIcon,
   FileText,
@@ -27,7 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { useCategories } from "@/hooks/use-categories";
 import { uploadReceiptWithProgress } from "@/lib/api";
 import { toast } from "sonner";
-import { formatSize } from "@/lib/utils";
+import { formatSize, staggerContainer, fadeUpItem } from "@/lib/utils";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -76,6 +77,12 @@ export function Upload() {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const validate = (f: File): string | null => {
     if (!ALLOWED_TYPES.includes(f.type)) {
@@ -184,18 +191,25 @@ export function Upload() {
         </CardHeader>
         <CardContent>
           {!file && !compressing ? (
-            <div
+            <motion.div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              className={`flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-colors ${
+              animate={{ scale: dragOver ? 1.02 : 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className={`flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-all ${
                 dragOver
                   ? "border-primary bg-primary/5"
                   : "border-muted-foreground/25 hover:border-muted-foreground/50"
               }`}
             >
-              <UploadIcon className="h-10 w-10 text-muted-foreground/50" />
+              <motion.div
+                animate={dragOver ? { y: -4 } : { y: 0 }}
+                transition={{ type: "spring", stiffness: 200 }}
+              >
+                <UploadIcon className="h-10 w-10 text-muted-foreground/50" />
+              </motion.div>
               <div className="text-center">
                 <p className="text-sm font-medium">
                   Drop your document here, or click to browse
@@ -211,17 +225,26 @@ export function Upload() {
                 className="hidden"
                 onChange={handleInputChange}
               />
-            </div>
+            </motion.div>
           ) : compressing ? (
-            <div className="flex flex-col items-center gap-3 py-12">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center gap-3 py-12"
+            >
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
               <p className="text-sm text-muted-foreground">
                 Compressing image...
               </p>
-            </div>
+            </motion.div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 rounded-lg border p-4">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="space-y-4"
+            >
+              <motion.div variants={fadeUpItem} className="flex items-center gap-4 rounded-lg border p-4">
                 {previewUrl ? (
                   <img
                     src={previewUrl}
@@ -256,16 +279,20 @@ export function Upload() {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </div>
+              </motion.div>
 
               {error && (
-                <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+                >
                   <AlertCircle className="h-4 w-4" />
                   {error}
-                </div>
+                </motion.div>
               )}
 
-              <div className="space-y-2">
+              <motion.div variants={fadeUpItem} className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="notes">Notes</Label>
                   <span className="text-xs text-muted-foreground">(optional)</span>
@@ -279,9 +306,9 @@ export function Upload() {
                   disabled={uploading}
                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
-              </div>
+              </motion.div>
 
-              <div className="space-y-2">
+              <motion.div variants={fadeUpItem} className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Select
                   value={category}
@@ -299,9 +326,9 @@ export function Upload() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </motion.div>
 
-              <div className="space-y-2">
+              <motion.div variants={fadeUpItem} className="space-y-2">
                 <Label htmlFor="owner">Owner / Folder (optional)</Label>
                 <Input
                   id="owner"
@@ -310,17 +337,31 @@ export function Upload() {
                   placeholder="ใครเป็นเจ้าของเอกสารนี้"
                   disabled={uploading}
                 />
-              </div>
+              </motion.div>
 
-              {uploading && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Uploading...</span>
-                    <span className="font-medium">{uploadProgress}%</span>
-                  </div>
-                  <Progress value={uploadProgress} />
-                </div>
-              )}
+              <AnimatePresence>
+                {uploading && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-2 overflow-hidden"
+                  >
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Uploading...</span>
+                      <motion.span
+                        className="font-medium"
+                        key={uploadProgress}
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        {uploadProgress}%
+                      </motion.span>
+                    </div>
+                    <Progress value={uploadProgress} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <Button
                 className="w-full"
@@ -335,7 +376,7 @@ export function Upload() {
                   </>
                 )}
               </Button>
-            </div>
+            </motion.div>
           )}
         </CardContent>
       </Card>

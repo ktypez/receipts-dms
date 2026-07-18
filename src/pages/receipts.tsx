@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
+import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Trash2, LayoutGrid, TableIcon, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,8 +202,16 @@ export function Receipts() {
                 </Button>
               </div>
 
+              <AnimatePresence mode="wait">
               {view === "table" ? (
-                <div className="overflow-x-auto rounded-md border">
+                <motion.div
+                  key="table"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="overflow-x-auto rounded-md border"
+                >
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -251,12 +260,22 @@ export function Receipts() {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
+                </motion.div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                <motion.div
+                  key="grid"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                >
                   {paged.map((r) => (
-                    <div
+                    <motion.div
                       key={r.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2 }}
                       className="group relative overflow-hidden rounded-lg border border-border bg-card"
                     >
                       <Link to={`/receipts/${r.id}`}>
@@ -334,10 +353,11 @@ export function Receipts() {
                           </Dialog>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
 
               <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                 <span>

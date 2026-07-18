@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pencil, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useReceipts } from "@/hooks/use-receipts";
 
 import { toast } from "sonner";
+import { staggerContainer, fadeUpItem } from "@/lib/utils";
 
 export function Categories() {
   const {
@@ -156,10 +158,17 @@ export function Categories() {
               No categories yet. Add one above.
             </div>
           ) : (
-            <div className="space-y-2">
+            <motion.div
+              className="space-y-2"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+            >
               {categories.map((c) => (
-                <div
+                <motion.div
                   key={c.id}
+                  layout
+                  variants={fadeUpItem}
                   draggable
                   onDragStart={handleCatDragStart(c.id)}
                   onDragOver={(e) => {
@@ -174,6 +183,7 @@ export function Categories() {
                     e.preventDefault();
                     handleCatDrop(c.id);
                   }}
+                  whileDrag={{ scale: 1.05, opacity: 0.8, zIndex: 50 }}
                   className={`rounded-lg border border-border bg-card ${
                     dragCat === c.id ? "opacity-50" : ""
                   } ${
@@ -252,32 +262,43 @@ export function Categories() {
                     </div>
                   </div>
 
-                  {editId === c.id && (
-                    <div className="border-t border-border px-4 py-3">
-                      <div className="flex gap-3">
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleEdit(c.id);
-                            if (e.key === "Escape") setEditId(null);
-                          }}
-                          autoFocus
-                          className="flex-1"
-                        />
-                        <Button onClick={() => handleEdit(c.id)}>บันทึก</Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setEditId(null)}
-                        >
-                          ยกเลิก
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  <AnimatePresence>
+                    {editId === c.id && (
+                      <motion.div
+                        key="edit-panel"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-border px-4 py-3">
+                          <div className="flex gap-3">
+                            <Input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleEdit(c.id);
+                                if (e.key === "Escape") setEditId(null);
+                              }}
+                              autoFocus
+                              className="flex-1"
+                            />
+                            <Button onClick={() => handleEdit(c.id)}>บันทึก</Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditId(null)}
+                            >
+                              ยกเลิก
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Trash2,
@@ -9,7 +10,6 @@ import {
   Pencil,
   Check,
   X,
-  StickyNote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { useReceipts } from "@/hooks/use-receipts";
 import { useCategories } from "@/hooks/use-categories";
-import { formatDate, formatSize, stripExtension } from "@/lib/utils";
+import { formatDate, formatSize, stripExtension, staggerContainer, fadeUpItem } from "@/lib/utils";
 import { getFileUrl, updateReceipt } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -146,8 +146,14 @@ export function ReceiptDetail() {
         </h2>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <motion.div
+        className="grid gap-4 lg:grid-cols-3"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={fadeUpItem} className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Preview</CardTitle>
           </CardHeader>
@@ -186,7 +192,9 @@ export function ReceiptDetail() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
+        <motion.div variants={fadeUpItem}>
         <Card>
           <CardHeader>
             <CardTitle>Details</CardTitle>
@@ -362,20 +370,32 @@ export function ReceiptDetail() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      {lightbox && isImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setLightbox(false)}
-        >
-          <img
-            src={getFileUrl(receipt.id)}
-            alt={receipt.filename}
-            className="max-h-[95vh] max-w-[95vw] object-contain"
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {lightbox && isImage && (
+          <motion.div
+            key="lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onClick={() => setLightbox(false)}
+          >
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              src={getFileUrl(receipt.id)}
+              alt={receipt.filename}
+              className="max-h-[95vh] max-w-[95vw] object-contain"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

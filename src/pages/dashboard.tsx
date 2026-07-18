@@ -1,14 +1,49 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
+import { motion } from "framer-motion";
 import { Upload, ReceiptText, Tags, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useReceipts } from "@/hooks/use-receipts";
 import { useCategories } from "@/hooks/use-categories";
-import { formatDateShort, formatSize } from "@/lib/utils";
+import {
+  formatDateShort,
+  formatSize,
+  staggerContainer,
+  fadeUpItem,
+} from "@/lib/utils";
 import { getFileUrl } from "@/lib/api";
 import type { Receipt } from "@/types";
+
+function AnimatedCounter({ value }: { value: number }) {
+  const [count, setCount] = useState(value);
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    prevRef.current = value;
+    if (prev === value) return;
+
+    const start = prev;
+    const diff = value - prev;
+    const duration = 400;
+    const step = diff / (duration / 16);
+    let current = start;
+    const timer = setInterval(() => {
+      current += step;
+      if (Math.abs(current - value) < Math.abs(step)) {
+        setCount(value);
+        clearInterval(timer);
+      } else {
+        setCount(Math.round(current));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <>{count}</>;
+}
 
 function StatCard({
   icon: Icon,
@@ -18,27 +53,31 @@ function StatCard({
 }: {
   icon: React.ElementType;
   label: string;
-  value: string | number;
+  value: number;
   href: string;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {label}
-        </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <Link
-          to={href}
-          className="mt-1 inline-flex items-center text-xs text-primary hover:underline"
-        >
-          View all <ArrowRight className="ml-1 h-3 w-3" />
-        </Link>
-      </CardContent>
-    </Card>
+    <motion.div variants={fadeUpItem}>
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {label}
+          </CardTitle>
+          <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold tabular-nums">
+            <AnimatedCounter value={value} />
+          </div>
+          <Link
+            to={href}
+            className="mt-1 inline-flex items-center text-xs text-primary hover:underline"
+          >
+            View all <ArrowRight className="ml-1 h-3 w-3" />
+          </Link>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -75,11 +114,7 @@ function RecentReceipt({ r }: { r: Receipt }) {
 export function Dashboard() {
   const { receipts, loading: loadingReceipts } = useReceipts();
   const { categories, loading: loadingCategories } = useCategories();
-  const [recent, setRecent] = useState<Receipt[]>([]);
-
-  useEffect(() => {
-    setRecent(receipts.slice(0, 5));
-  }, [receipts]);
+  const recent = useMemo(() => receipts.slice(0, 5), [receipts]);
 
   const last7 = receipts.filter((r) => {
     const diff = Date.now() - new Date(r.uploaded_at).getTime();
@@ -97,7 +132,12 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           icon={ReceiptText}
@@ -119,35 +159,44 @@ export function Dashboard() {
         />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Documents</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/receipts">
-              View all <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {recent.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <Upload className="h-10 w-10 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                No documents yet. Upload your first document!
-              </p>
-              <Button asChild>
-                <Link to="/upload">Upload Document</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recent.map((r) => (
-                <RecentReceipt key={r.id} r={r} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+      <motion.div variants={fadeUpItem}>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent Documents</CardTitle>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/receipts">
+                View all <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {recent.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <Upload className="h-10 w-10 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">
+                  No documents yet. Upload your first document!
+                </p>
+                <Button asChild>
+                  <Link to="/upload">Upload Document</Link>
+                </Button>
+              </div>
+            ) : (
+              <motion.div
+                className="space-y-2"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="show"
+              >
+                {recent.map((r) => (
+                  <motion.div key={r.id} variants={fadeUpItem}>
+                    <RecentReceipt r={r} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }
