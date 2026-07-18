@@ -13,6 +13,7 @@ export default defineConfig({
   build: {
     outDir: "./public",
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
   },
   publicDir: "static",
   server: {
