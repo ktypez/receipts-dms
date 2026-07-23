@@ -1,9 +1,9 @@
-# receipts-dms
+# paper
 
 ## KB
-- `~/OKF/projects/receipts-dms/profile.md` — tech stack, architecture
-- `~/OKF/projects/receipts-dms/status.md` — project status (routes, design, changelog)
-- `~/OKF/projects/receipts-dms/commands.md` — dev commands
+- `~/OKF/projects/paper/profile.md` — tech stack, architecture
+- `~/OKF/projects/paper/status.md` — project status (routes, design, changelog)
+- `~/OKF/projects/paper/commands.md` — dev commands
 - `~/OKF/system/conventions.md` — communication rules, Termux setup
 - `~/OKF/system/workspace.md` — cross-project comparison, dev commands
 - `~/OKF/skills/INDEX.md` — available skills
@@ -17,7 +17,7 @@
 ## Commands
 - dev: `npm run dev`
 - build: `npm run build`
-- deploy: `npx wrangler pages deploy ./dist --project-name=receipts-dms`
+- deploy: `npx wrangler pages deploy ./dist --project-name=paper`
 
 ## Rules
 - Domain: paper.mcky.space

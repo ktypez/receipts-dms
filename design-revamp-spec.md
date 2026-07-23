@@ -1,4 +1,4 @@
-# Design Revamp: Lovable for receipts-dms
+# Design Revamp: Lovable for paper
 
 ## Source Reference
 

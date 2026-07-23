@@ -1,4 +1,4 @@
-const CACHE = "receipts-dms-v1";
+const CACHE = "paper-v1";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

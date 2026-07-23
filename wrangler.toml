@@ -1,4 +1,4 @@
-name = "receipts-dms"
+name = "paper"
 compatibility_date = "2026-07-09"
 pages_build_output_dir = "./public"
 
@@ -9,4 +9,4 @@ database_id = "64dc7d25-606e-4e53-80bb-60f229b37b74"
 
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "receipts-dms-bucket"
+bucket_name = "paper-bucket"
