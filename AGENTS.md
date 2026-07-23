@@ -17,7 +17,7 @@
 ## Commands
 - dev: `npm run dev`
 - build: `npm run build`
-- deploy: `npx wrangler pages deploy ./dist --project-name=paper`
+- deploy: `npx wrangler pages deploy ./public --project-name=receipts-dms`
 
 ## Rules
 - Domain: paper.mcky.space
